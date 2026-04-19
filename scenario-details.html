@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Maze universal snippet -->
+<script>
+(function (m, a, z, e) {
+  var s, t, u, v;
+  try {
+    t = m.sessionStorage.getItem('maze-us');
+  } catch (err) {}
+  if (!t) {
+    t = new Date().getTime();
+    try {
+      m.sessionStorage.setItem('maze-us', t);
+    } catch (err) {}
+  }
+  u = document.currentScript || (function () {
+    var w = document.getElementsByTagName('script');
+    return w[w.length - 1];
+  })();
+  v = u && u.nonce;
+  s = a.createElement('script');
+  s.src = z + '?apiKey=' + e;
+  s.async = true;
+  if (v) s.setAttribute('nonce', v);
+  a.getElementsByTagName('head')[0].appendChild(s);
+  m.mazeUniversalSnippetApiKey = e;
+})(window, document, 'https://snippet.maze.co/maze-universal-loader.js', '001f4ab7-3728-4f99-9ac2-495ebc6b9e5a');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scenario Details — Sweep</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Cursor Design System Tokens ── */
+:root {
+  /* Colours */
+  --bg:         #f2f1ed;
+  --bg-light:   #f7f7f4;
+  --surf-100:   #f7f7f4;
+  --surf-200:   #f2f1ed;
+  --surf-300:   #ebeae5;
+  --surf-400:   #e6e5e0;
+  --surf-500:   #e1e0db;
+  --text:       #26251e;
+  --text-55:    rgba(38,37,30,0.55);
+  --text-40:    rgba(38,37,30,0.40);
+  --text-25:    rgba(38,37,30,0.25);
+  --orange:     #f54e00;
+  --crimson:    #cf2d56;
+  --gold:       #c08532;
+  --success:    #1f8a65;
+
+  /* Borders (oklab approximated as rgba) */
+  --bdr-10:     rgba(38,37,30,0.10);
+  --bdr-20:     rgba(38,37,30,0.20);
+  --bdr-55:     rgba(38,37,30,0.55);
+  --bdr-row:    rgba(38,37,30,0.07);
+
+  /* Shadows */
+  --shadow-card:    rgba(0,0,0,0.14) 0px 28px 70px, rgba(0,0,0,0.10) 0px 14px 32px, rgba(38,37,30,0.10) 0px 0px 0px 1px;
+  --shadow-ambient: rgba(0,0,0,0.02) 0px 0px 16px, rgba(0,0,0,0.008) 0px 0px 8px;
+  --shadow-focus:   rgba(0,0,0,0.10) 0px 4px 12px;
+
+  /* Type */
+  --font-ui:    'Inter', system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-mono:  ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{
+  font-family:var(--font-ui);
+  background:var(--bg);
+  color:var(--text);
+  min-width:1280px;
+  font-size:16px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── Layout ── */
+.wrap{max-width:1200px;margin:0 auto;padding:0 36px;}
+
+/* ── Breadcrumb bar (detail view only) ── */
+.breadcrumb-bar{
+  position:sticky;top:0;z-index:120;
+  background:var(--bg);
+  border-bottom:1px solid var(--bdr-10);
+  height:44px;display:flex;align-items:center;
+}
+/* ── Toolbar row (scrolls with page, not sticky) ── */
+.toolbar-row{
+  display:flex;align-items:center;
+  padding:10px 0 12px;
+}
+
+/* ── Breadcrumb ── */
+nav.bc{display:flex;align-items:center;gap:2px;}
+.bc-link{
+  font-size:13px;font-weight:500;color:var(--text-55);
+  cursor:pointer;padding:2px 4px;border-radius:4px;
+  text-decoration:none;transition:color .15s;
+}
+.bc-link:hover{color:var(--text);}
+.bc-sep{font-size:13px;color:var(--text-25);padding:0 1px;}
+.bc-current{font-size:13px;font-weight:500;color:var(--text);padding:2px 4px;}
+
+/* ── Page header ── */
+.page-header{padding:28px 0 20px;display:flex;align-items:flex-start;justify-content:space-between;}
+.page-header .subtitle{
+  margin-top:5px;font-size:13px;font-weight:400;
+  color:var(--text-55);letter-spacing:.01em;
+}
+
+/* ── Scenario title trigger ── */
+.sc-trigger-wrap{position:relative;}
+.sc-trigger{
+  display:inline-flex;align-items:center;gap:8px;
+  cursor:pointer;user-select:none;
+}
+.sc-trigger h1{
+  font-size:28px;font-weight:600;line-height:1.2;
+  color:var(--text);letter-spacing:-.5px;
+  transition:color .15s;
+}
+.sc-trigger:hover h1{color:var(--crimson);}
+.sc-trigger:hover .sc-chev{color:var(--crimson);}
+.sc-chev{color:var(--text-40);transition:color .15s;flex-shrink:0;margin-top:2px;}
+
+/* ── Scenario switcher popover ── */
+.sc-pop{
+  position:absolute;top:calc(100% + 8px);left:0;
+  width:340px;
+  background:var(--surf-200);
+  border-radius:8px;
+  box-shadow:var(--shadow-card);
+  z-index:400;display:none;
+  padding:6px 0;
+  overflow:hidden;
+}
+.sc-pop.open{display:block;}
+.sc-pop-label{
+  font-size:11px;font-weight:600;letter-spacing:.06em;
+  color:var(--text-40);text-transform:uppercase;
+  padding:6px 14px 8px;display:block;
+}
+.sc-item{
+  display:flex;align-items:center;justify-content:space-between;
+  height:40px;padding:0 14px;cursor:pointer;
+  transition:background .12s;gap:10px;
+}
+.sc-item:hover{background:var(--surf-400);}
+.sc-item-left{display:flex;align-items:center;gap:8px;min-width:0;}
+.sc-check{font-size:12px;color:var(--orange);width:14px;flex-shrink:0;font-weight:600;}
+.sc-item-name{
+  font-size:14px;font-weight:500;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:color .12s;
+}
+.sc-item-name.active{color:var(--orange);}
+.sc-item:hover .sc-item-name{color:var(--crimson);}
+.sc-item-meta{
+  font-size:11px;font-weight:400;color:var(--text-40);
+  white-space:nowrap;flex-shrink:0;font-family:var(--font-mono);
+}
+
+/* ── Buttons ── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 14px;border-radius:8px;
+  font-family:var(--font-ui);font-size:13px;font-weight:500;
+  cursor:pointer;border:none;
+  transition:color .15s, background .15s, box-shadow .2s;
+  white-space:nowrap;line-height:1.3;
+}
+.btn:focus-visible{box-shadow:var(--shadow-focus);}
+
+.btn-warm{background:var(--surf-300);color:var(--text);}
+.btn-warm:hover{color:var(--crimson);}
+
+.btn-ghost{background:rgba(38,37,30,.06);color:var(--text-55);}
+.btn-ghost:hover{color:var(--crimson);}
+
+.btn-orange{background:var(--orange);color:#fff;}
+.btn-orange:hover{background:#d94400;color:#fff;}
+
+/* ── Toolbar ── */
+.toolbar-inner{display:flex;align-items:center;gap:8px;height:100%;width:100%;}
+.toolbar-left{display:flex;align-items:center;gap:6px;flex:1;min-width:0;}
+.toolbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+
+/* ── Search ── */
+.search-wrap{position:relative;flex-shrink:0;}
+.search-icon{
+  position:absolute;left:9px;top:50%;transform:translateY(-50%);
+  color:var(--text-40);pointer-events:none;display:flex;align-items:center;
+}
+.search-input{
+  width:240px;padding:5px 26px 5px 30px;
+  border:1px solid var(--bdr-10);border-radius:6px;
+  font-family:var(--font-ui);font-size:13px;color:var(--text);
+  background:var(--surf-300);outline:none;transition:border .15s,box-shadow .15s;
+}
+.search-input::placeholder{color:var(--text-40);}
+.search-input:focus{border-color:var(--bdr-20);box-shadow:var(--shadow-focus);}
+.search-clear{
+  position:absolute;right:7px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;
+  color:var(--text-40);font-size:15px;line-height:1;padding:1px 2px;display:none;
+}
+.search-clear:hover{color:var(--crimson);}
+.search-count{font-size:11px;color:var(--text-40);white-space:nowrap;flex-shrink:0;font-family:var(--font-mono);}
+
+/* ── Dropdown triggers ── */
+.dd-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 10px;border:1px solid var(--bdr-10);border-radius:6px;
+  font-family:var(--font-ui);font-size:13px;font-weight:500;
+  color:var(--text-55);background:var(--surf-300);cursor:pointer;
+  white-space:nowrap;transition:color .15s,background .12s,border .15s;
+}
+.dd-btn:hover{color:var(--text);background:var(--surf-400);}
+.dd-btn:focus-visible{box-shadow:var(--shadow-focus);}
+.dd-btn.active{
+  background:rgba(245,78,0,.08);color:var(--orange);
+  border-color:rgba(245,78,0,.25);
+}
+
+/* ── Popovers ── */
+.pop-wrap{position:relative;}
+.popover{
+  position:absolute;top:calc(100% + 6px);left:0;
+  background:var(--surf-200);border-radius:8px;
+  box-shadow:var(--shadow-card);z-index:300;
+  display:none;padding:12px;
+}
+.popover.open{display:block;}
+.pop-group{margin-bottom:12px;}
+.pop-group:last-child{margin-bottom:0;}
+.pop-label{
+  font-size:10px;font-weight:600;letter-spacing:.06em;
+  color:var(--text-40);text-transform:uppercase;margin-bottom:6px;
+}
+.pop-item{
+  display:flex;align-items:center;gap:8px;padding:3px 0;
+  font-size:13px;color:var(--text-55);cursor:pointer;
+  transition:color .12s;
+}
+.pop-item:hover{color:var(--text);}
+.pop-item input[type=checkbox]{accent-color:var(--orange);cursor:pointer;width:13px;height:13px;}
+
+/* ── Filter pills ── */
+.filter-pills{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.fpill{
+  display:inline-flex;align-items:center;gap:3px;
+  background:rgba(245,78,0,.10);color:var(--orange);
+  padding:2px 8px;border-radius:9999px;
+  font-size:11px;font-weight:600;letter-spacing:.03em;white-space:nowrap;
+}
+.fpill-x{
+  background:none;border:none;cursor:pointer;
+  color:var(--orange);font-size:14px;line-height:1;padding:0 1px;
+}
+.fpill-x:hover{color:var(--crimson);}
+.clear-all{
+  font-size:12px;font-weight:500;color:var(--text-40);
+  cursor:pointer;text-decoration:underline;white-space:nowrap;
+  background:none;border:none;font-family:var(--font-ui);
+  transition:color .12s;
+}
+.clear-all:hover{color:var(--crimson);}
+
+/* ── Sort indicator ── */
+.sort-ind{display:none;align-items:center;gap:4px;font-size:11px;color:var(--text-55);white-space:nowrap;font-family:var(--font-mono);}
+.sort-ind.on{display:flex;}
+.sort-x{background:none;border:none;cursor:pointer;color:var(--text-40);font-size:15px;line-height:1;padding:0;}
+.sort-x:hover{color:var(--crimson);}
+
+/* ── Table ── */
+.table-wrap{width:100%;padding-bottom:80px;}
+table{width:100%;border-collapse:collapse;table-layout:fixed;}
+col.c-exp{width:12px;}
+col.c-act{width:90px;}
+col.c-branches{width:190px;}
+col.c-bly{width:112px;}
+col.c-tgy{width:104px;}
+col.c-region{width:112px;}
+col.c-fn{width:130px;}
+
+/* Header row — th is sticky so column labels pin at viewport top on scroll */
+thead tr{background:var(--surf-400);height:36px;}
+th{
+  font-size:10px;font-weight:600;letter-spacing:.06em;
+  color:var(--text-40);text-transform:uppercase;text-align:left;
+  padding:0 10px;border-bottom:1px solid var(--bdr-10);
+  cursor:pointer;user-select:none;white-space:nowrap;
+  transition:color .12s;
+  position:sticky;top:0;background:var(--surf-400);z-index:50;
+}
+th:hover:not(.th-exp){color:var(--text-55);}
+th.th-exp{width:32px;padding:0 4px;cursor:default;pointer-events:none;}
+th.th-r{text-align:right;}
+.th-arrow{margin-left:3px;font-size:8px;opacity:.7;}
+
+/* Body rows */
+tbody tr{height:42px;border-bottom:1px solid var(--bdr-row);}
+td{
+  padding:0 10px;vertical-align:middle;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  background:var(--bg);
+  transition:background-color 100ms ease;
+}
+td.td-exp{padding:0 4px;text-align:center;width:32px;}
+/* JS-driven hover — replaces CSS :hover so cascade works cleanly */
+tr.row-hover td{background:#f6f5f4;}
+tr.cascade-hi td{background:rgba(0,0,0,0.02);}
+/* cascade-hi never overrides the return highlight (animation wins) */
+
+/* Chevron */
+.chev{
+  background:none;border:none;cursor:pointer;
+  padding:3px;border-radius:3px;color:var(--text-40);
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:9px;transition:color .12s,background .1s;
+}
+.chev:hover{background:rgba(38,37,30,.07);color:var(--text-55);}
+.chev:focus-visible{box-shadow:var(--shadow-focus);}
+
+/* Name cell */
+.name-cell{display:flex;align-items:center;gap:2px;}
+.chev-slot{
+  width:22px;flex-shrink:0;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.name-link{
+  color:var(--text);text-decoration:none;cursor:pointer;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;
+  font-size:14px;transition:color .12s;
+}
+.name-link:hover{color:var(--orange);}
+.name-parent{font-weight:600;}
+.name-leaf{font-weight:400;}
+.name-ctx{color:var(--text-40)!important;}
+
+/* Branch pills (chips shown in the Branches column) */
+.branches-cell{
+  display:flex;align-items:center;gap:4px;
+  overflow:hidden;
+}
+.bpill{
+  display:inline-flex;align-items:center;
+  padding:2px 8px;border-radius:9999px;
+  background:var(--surf-400);color:var(--text-55);
+  font-size:11px;font-weight:500;letter-spacing:.01em;white-space:nowrap;
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;
+}
+.bpill-more{
+  font-size:11px;color:var(--text-40);font-family:var(--font-mono);
+  flex-shrink:0;
+}
+
+/* Numeric */
+.num{font-size:13px;font-family:var(--font-mono);color:var(--text);}
+.num-0{color:var(--crimson);}
+.num-muted{font-size:13px;font-family:var(--font-mono);color:var(--text-40);}
+.num-agg{font-size:13px;font-family:var(--font-mono);color:#615d59;}
+td.num-cell{text-align:right;}
+
+/* ── Return highlight ── */
+@keyframes returnHighlight{
+  0%   {background:rgba(0,117,222,0.06);}
+  77%  {background:rgba(0,117,222,0.06);}
+  100% {background:var(--bg);}
+}
+tr.row-returning td{animation:returnHighlight 2.6s ease-out forwards;}
+tr.row-returning:hover td{animation:none!important;background:var(--surf-300)!important;}
+
+.cell-sec{font-size:13px;color:var(--text-55);}
+
+/* Empty */
+.empty-msg{text-align:center;padding:56px 0;font-size:14px;color:var(--text-40);}
+
+/* ─────── DETAIL VIEW ─────── */
+#detail-view{display:none;}
+.detail-header{padding:24px 0 0;display:flex;align-items:flex-start;justify-content:space-between;gap:24px;}
+.detail-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;padding-top:8px;}
+
+.detail-title{
+  font-size:28px;font-weight:600;line-height:1.2;letter-spacing:-.5px;
+  color:var(--text);margin-bottom:10px;margin-top:20px;
+  transition:color .15s;
+}
+.detail-desc{
+  font-size:14px;font-weight:400;color:var(--text-55);
+  margin-bottom:22px;max-width:820px;line-height:1.5;
+}
+
+/* Target switcher (mirrors scenario switcher) */
+.tg-trigger-wrap{position:relative;}
+.tg-trigger{
+  display:inline-flex;align-items:center;gap:8px;
+  cursor:pointer;user-select:none;
+  margin-top:20px;margin-bottom:10px;
+}
+.tg-trigger .detail-title{margin-top:0;margin-bottom:0;}
+.tg-trigger:hover .detail-title{color:var(--crimson);}
+.tg-trigger:hover .sc-chev{color:var(--crimson);}
+/* Popover anchored to the title uses the same .sc-pop styling */
+.sc-pop.tg-pop{top:calc(100% - 6px);width:420px;max-height:420px;overflow-y:auto;}
+
+/* Settings card (shown on the target details page) */
+.settings-card{
+  display:flex;align-items:center;gap:32px;
+  background:var(--surf-100);border:1px solid var(--bdr-10);
+  border-radius:10px;padding:16px 20px;
+  margin-bottom:28px;
+  box-shadow:var(--shadow-ambient);
+}
+.sc-col{
+  display:flex;flex-direction:column;gap:6px;
+  min-width:0;flex:1 1 auto;
+}
+.sc-col.sc-col-branches{flex:1.4 1 auto;}
+.sc-label{
+  font-size:11px;font-weight:600;letter-spacing:.04em;
+  color:var(--text-55);
+}
+.sc-val{
+  font-size:14px;font-weight:500;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.sc-val-branches{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.sc-edit-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 14px;border:none;border-radius:8px;
+  background:transparent;color:var(--text-55);
+  font-family:var(--font-ui);font-size:13px;font-weight:500;
+  cursor:pointer;flex-shrink:0;
+  transition:color .15s,background .12s;
+}
+.sc-edit-btn:hover{color:var(--text);background:var(--surf-300);}
+
+.chart-area{
+  background:var(--surf-400);border-radius:8px;height:340px;
+  border:1px solid var(--bdr-10);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-40);font-size:14px;margin-bottom:32px;
+  font-family:var(--font-mono);letter-spacing:.02em;
+}
+
+.detail-section h3{
+  font-size:18px;font-weight:600;letter-spacing:-.2px;
+  color:var(--text);margin-bottom:14px;
+}
+.action-list{list-style:disc;padding-left:20px;}
+.action-list li{font-size:14px;line-height:1.6;padding:4px 0;color:var(--text);}
+.no-actions{font-size:14px;color:var(--text-55);font-style:italic;}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--text);color:#fff;
+  padding:10px 18px;border-radius:8px;
+  font-size:13px;font-weight:500;
+  box-shadow:var(--shadow-card);
+  opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;
+  z-index:800;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SCENARIO VIEW ══════════════ -->
+<div id="scenario-view">
+
+  <div class="wrap">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="sc-trigger-wrap" id="sc-trigger-wrap">
+        <div class="sc-trigger" onclick="toggleScenarioPop()" id="sc-trigger">
+          <h1 id="sc-title">—</h1>
+          <span class="sc-chev">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>
+          </span>
+        </div>
+        <p class="subtitle" id="sc-subtitle"></p>
+
+        <!-- Scenario switcher popover -->
+        <div class="sc-pop" id="sc-pop">
+          <span class="sc-pop-label">Scenarios</span>
+          <div id="sc-pop-list"></div>
+        </div>
+      </div>
+
+      <button class="btn btn-warm" onclick="onAddTarget()" style="margin-top:4px;">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M8 2v12M2 8h12"/></svg>
+        Add target
+      </button>
+    </div><!-- /page-header -->
+
+    <!-- TOOLBAR ROW (scrolls with page) -->
+    <div class="toolbar-row">
+      <div class="toolbar-inner">
+        <div class="toolbar-left">
+
+          <!-- Search -->
+          <div class="search-wrap">
+            <span class="search-icon">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="m11 11 3 3"/></svg>
+            </span>
+            <input id="search-input" class="search-input" type="text" placeholder="Search targets…" oninput="onSearchInput(this.value)">
+            <button class="search-clear" id="search-clear" onclick="clearSearch()">×</button>
+          </div>
+          <span class="search-count hidden" id="search-count"></span>
+
+          <!-- Filter -->
+          <div class="pop-wrap" id="filter-wrap">
+            <button class="dd-btn" id="filter-btn" onclick="togglePop('filter-pop')">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 4h12M5 8h6M7 12h2"/></svg>
+              Filter
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
+            </button>
+            <div class="popover" id="filter-pop" style="min-width:200px;">
+              <div class="pop-group">
+                <div class="pop-label">Region</div>
+                <label class="pop-item"><input type="checkbox" value="Global" onchange="onFilter('region','Global',this.checked)"> Global</label>
+                <label class="pop-item"><input type="checkbox" value="Europe" onchange="onFilter('region','Europe',this.checked)"> Europe</label>
+                <label class="pop-item"><input type="checkbox" value="APAC" onchange="onFilter('region','APAC',this.checked)"> APAC</label>
+                <label class="pop-item"><input type="checkbox" value="Americas" onchange="onFilter('region','Americas',this.checked)"> Americas</label>
+                <label class="pop-item"><input type="checkbox" value="France" onchange="onFilter('region','France',this.checked)"> France</label>
+                <label class="pop-item"><input type="checkbox" value="Germany" onchange="onFilter('region','Germany',this.checked)"> Germany</label>
+              </div>
+              <div class="pop-group">
+                <div class="pop-label">Function</div>
+                <label class="pop-item"><input type="checkbox" value="Corporate" onchange="onFilter('functionArea','Corporate',this.checked)"> Corporate</label>
+                <label class="pop-item"><input type="checkbox" value="Operations" onchange="onFilter('functionArea','Operations',this.checked)"> Operations</label>
+                <label class="pop-item"><input type="checkbox" value="Transport" onchange="onFilter('functionArea','Transport',this.checked)"> Transport</label>
+                <label class="pop-item"><input type="checkbox" value="Factory" onchange="onFilter('functionArea','Factory',this.checked)"> Factory</label>
+                <label class="pop-item"><input type="checkbox" value="Supply Chain" onchange="onFilter('functionArea','Supply Chain',this.checked)"> Supply Chain</label>
+                <label class="pop-item"><input type="checkbox" value="Packaging" onchange="onFilter('functionArea','Packaging',this.checked)"> Packaging</label>
+                <label class="pop-item"><input type="checkbox" value="IT" onchange="onFilter('functionArea','IT',this.checked)"> IT</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter pills + clear -->
+          <div class="filter-pills" id="filter-pills"></div>
+          <button class="clear-all hidden" id="clear-all-btn" onclick="clearAllFilters()">Clear all</button>
+
+        </div><!-- /toolbar-left -->
+      </div><!-- /toolbar-inner -->
+    </div><!-- /toolbar-row -->
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <table>
+        <colgroup>
+          <col class="c-exp">
+          <col><!-- name auto -->
+          <col class="c-act">
+          <col class="c-branches">
+          <col class="c-bly">
+          <col class="c-tgy">
+          <col class="c-region">
+          <col class="c-fn">
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="th-exp"></th>
+            <th onclick="doSort('name')">Name<span class="th-arrow" id="th-name"></span></th>
+            <th class="th-r" onclick="doSort('actions')"># Actions<span class="th-arrow" id="th-actions"></span></th>
+            <th onclick="doSort('branches')">Branches<span class="th-arrow" id="th-branches"></span></th>
+            <th onclick="doSort('baselineYear')">Baseline year<span class="th-arrow" id="th-baselineYear"></span></th>
+            <th onclick="doSort('targetYear')">Target year<span class="th-arrow" id="th-targetYear"></span></th>
+            <th onclick="doSort('region')">Region<span class="th-arrow" id="th-region"></span></th>
+            <th onclick="doSort('functionArea')">Function<span class="th-arrow" id="th-functionArea"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="empty-msg hidden" id="empty-msg">No targets match your filters or search.</div>
+    </div>
+  </div>
+</div><!-- /scenario-view -->
+
+
+<!-- ══════════════ DETAIL VIEW ══════════════ -->
+<div id="detail-view">
+  <div class="breadcrumb-bar">
+    <div class="wrap">
+      <nav class="bc" id="det-breadcrumb"></nav>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="detail-header">
+      <div id="det-title-wrap" style="flex:1;min-width:0;"></div>
+      <div class="detail-actions">
+        <button class="btn btn-warm" onclick="onAddSubTarget()">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M8 2v12M2 8h12"/></svg>
+          Add sub-target
+        </button>
+        <button class="btn btn-ghost" title="More" onclick="showToast('More actions (prototype)')" style="padding:8px 10px;">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Settings card -->
+    <div id="det-settings"></div>
+
+    <div class="chart-area">trajectory chart</div>
+    <div class="detail-section">
+      <h3 id="det-actions-head"></h3>
+      <div id="det-actions-body"></div>
+    </div>
+    <div style="height:80px;"></div>
+  </div>
+</div>
+
+<!-- Toast (for stub CTAs) -->
+<div class="toast" id="toast"></div>
+
+
+<script>
+// ─────────────────────────────────────────────
+//  SCENARIO CATALOGUE
+// ─────────────────────────────────────────────
+const SCENARIOS = {
+  fy2026: {
+    name: 'FY2026 Reduction Plan',
+    date: 'Apr 8, 2026',
+    trackCount: 3,
+    targets: [
+      // ── Scope 1 ──────────────────────────────────────────────────────
+      {id:1,  name:"Reduce Scope 1 Emissions −30%",   track:"Scope 1", objective:"−30%",  owner:"Marie Laurent",  region:"Global",    actions:0, subTargets:8, depth:0, pid:null, kids:[2,10,11,12],
+       branches:["Global"],                          baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+
+      // L1
+      {id:2,  name:"Fleet Decarbonization",            track:"Scope 1", objective:"−35%",  owner:"Pierre Dubois",  region:"Europe",    actions:0, subTargets:4, depth:1, pid:1,    kids:[3,8,9],
+       branches:["West Europe","Transport"],         baselineYear:2021, targetYear:2029, functionArea:"Transport"},
+
+      // L2
+      {id:3,  name:"Fleet Electrification — France",   track:"Scope 1", objective:"−40%",  owner:"Pierre Dubois",  region:"France",    actions:0, subTargets:2, depth:2, pid:2,    kids:[4,7],
+       branches:["France","Transport"],              baselineYear:2021, targetYear:2029, functionArea:"Transport"},
+
+      // L3
+      {id:4,  name:"Paris Region Fleet",               track:"Scope 1", objective:"−45%",  owner:"Pierre Dubois",  region:"France",    actions:0, subTargets:2, depth:3, pid:3,    kids:[5,6],
+       branches:["Paris","Transport"],               baselineYear:2021, targetYear:2029, functionArea:"Transport"},
+
+      // L4
+      {id:5,  name:"Paris — Light Vehicles",           track:"Scope 1", objective:"−50%",  owner:"Pierre Dubois",  region:"France",    actions:3, subTargets:0, depth:4, pid:4,    kids:[],
+       branches:["Paris","Transport"],               baselineYear:2022, targetYear:2029, functionArea:"Transport"},
+      {id:6,  name:"Paris — Heavy Trucks",             track:"Scope 1", objective:"−40%",  owner:"Pierre Dubois",  region:"France",    actions:2, subTargets:0, depth:4, pid:4,    kids:[],
+       branches:["Paris","Transport"],               baselineYear:2022, targetYear:2029, functionArea:"Transport"},
+
+      // L3
+      {id:7,  name:"Lyon Region Fleet",                track:"Scope 1", objective:"−35%",  owner:"Pierre Dubois",  region:"France",    actions:4, subTargets:0, depth:3, pid:3,    kids:[],
+       branches:["Lyon","Transport"],                baselineYear:2021, targetYear:2029, functionArea:"Transport"},
+
+      // L2
+      {id:8,  name:"Fleet Electrification — Germany",  track:"Scope 1", objective:"−25%",  owner:"Hans Weber",     region:"Germany",   actions:1, subTargets:0, depth:2, pid:2,    kids:[],
+       branches:["Germany","Transport"],             baselineYear:2021, targetYear:2029, functionArea:"Transport"},
+      {id:9,  name:"Fleet Fuel Switching — US",        track:"Scope 1", objective:"−20%",  owner:"James Miller",   region:"Americas",  actions:0, subTargets:0, depth:2, pid:2,    kids:[],
+       branches:["Americas","Transport"],            baselineYear:2021, targetYear:2030, functionArea:"Transport"},
+
+      // L1
+      {id:10, name:"Buildings Energy — France",        track:"Scope 1", objective:"−40%",  owner:"Pierre Dubois",  region:"France",    actions:2, subTargets:0, depth:1, pid:1,    kids:[],
+       branches:["France","Operations"],             baselineYear:2021, targetYear:2029, functionArea:"Operations"},
+      {id:11, name:"Buildings Energy — Germany",       track:"Scope 1", objective:"−35%",  owner:"Hans Weber",     region:"Germany",   actions:0, subTargets:0, depth:1, pid:1,    kids:[],
+       branches:["Germany","Operations"],            baselineYear:2021, targetYear:2029, functionArea:"Operations"},
+      {id:12, name:"Manufacturing Process",            track:"Scope 1", objective:"−15%",  owner:"Yuki Tanaka",    region:"APAC",      actions:1, subTargets:0, depth:1, pid:1,    kids:[],
+       branches:["APAC","Factory"],                  baselineYear:2021, targetYear:2029, functionArea:"Factory"},
+
+      // ── Scope 2 ──────────────────────────────────────────────────────
+      {id:13, name:"Reduce Scope 2 Emissions −50%",    track:"Scope 2", objective:"−50%",  owner:"Marie Laurent",  region:"Global",    actions:0, subTargets:3, depth:0, pid:null, kids:[14,15,16],
+       branches:["Global"],                          baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+
+      // L1
+      {id:14, name:"Renewable Energy Procurement",     track:"Scope 2", objective:"−60%",  owner:"Sophie Martin",  region:"Europe",    actions:4, subTargets:0, depth:1, pid:13,   kids:[],
+       branches:["Europe","Operations"],             baselineYear:2021, targetYear:2029, functionArea:"Operations"},
+      {id:15, name:"On-site Solar — Tokyo Plant",      track:"Scope 2", objective:"−20%",  owner:"Yuki Tanaka",    region:"APAC",      actions:2, subTargets:0, depth:1, pid:13,   kids:[],
+       branches:["APAC","Factory"],                  baselineYear:2021, targetYear:2029, functionArea:"Factory"},
+      {id:16, name:"Grid Decarbonization — US",        track:"Scope 2", objective:"−30%",  owner:"James Miller",   region:"Americas",  actions:1, subTargets:0, depth:1, pid:13,   kids:[],
+       branches:["Americas","Operations"],           baselineYear:2021, targetYear:2029, functionArea:"Operations"},
+
+      // ── Scope 3 ──────────────────────────────────────────────────────
+      {id:17, name:"Reduce Scope 3 Emissions −40%",    track:"Scope 3", objective:"−40%",  owner:"Marie Laurent",  region:"Global",    actions:0, subTargets:9, depth:0, pid:null, kids:[18,24,25,26,27],
+       branches:["Global"],                          baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+
+      // L1
+      {id:18, name:"Supplier Engagement Program",      track:"Scope 3", objective:"−25%",  owner:"Lisa Chen",      region:"Global",    actions:0, subTargets:4, depth:1, pid:17,   kids:[19,22,23],
+       branches:["Global","Supply Chain"],           baselineYear:2021, targetYear:2029, functionArea:"Supply Chain"},
+
+      // L2
+      {id:19, name:"Tier 1 Suppliers — Packaging",     track:"Scope 3", objective:"−30%",  owner:"Lisa Chen",      region:"Europe",    actions:0, subTargets:2, depth:2, pid:18,   kids:[20,21],
+       branches:["Europe","Packaging"],              baselineYear:2021, targetYear:2029, functionArea:"Packaging"},
+
+      // L3
+      {id:20, name:"Packaging — Plastics",             track:"Scope 3", objective:"−35%",  owner:"Lisa Chen",      region:"Europe",    actions:2, subTargets:0, depth:3, pid:19,   kids:[],
+       branches:["Europe","Packaging"],              baselineYear:2022, targetYear:2029, functionArea:"Packaging"},
+      {id:21, name:"Packaging — Cardboard",            track:"Scope 3", objective:"−25%",  owner:"Lisa Chen",      region:"Europe",    actions:1, subTargets:0, depth:3, pid:19,   kids:[],
+       branches:["Europe","Packaging"],              baselineYear:2022, targetYear:2029, functionArea:"Packaging"},
+
+      // L2
+      {id:22, name:"Tier 1 Suppliers — Raw Materials", track:"Scope 3", objective:"−20%",  owner:"Lisa Chen",      region:"Global",    actions:0, subTargets:0, depth:2, pid:18,   kids:[],
+       branches:["Global","Supply Chain"],           baselineYear:2021, targetYear:2029, functionArea:"Supply Chain"},
+      {id:23, name:"Tier 2 Suppliers — Logistics",     track:"Scope 3", objective:"−15%",  owner:"Lisa Chen",      region:"Global",    actions:1, subTargets:0, depth:2, pid:18,   kids:[],
+       branches:["Global","Supply Chain"],           baselineYear:2021, targetYear:2029, functionArea:"Supply Chain"},
+
+      // L1
+      {id:24, name:"Business Travel Reduction",        track:"Scope 3", objective:"−50%",  owner:"Sophie Martin",  region:"Global",    actions:3, subTargets:0, depth:1, pid:17,   kids:[],
+       branches:["Global","Corporate"],              baselineYear:2021, targetYear:2029, functionArea:"Corporate"},
+      {id:25, name:"Employee Commuting",               track:"Scope 3", objective:"−30%",  owner:"Pierre Dubois",  region:"France",    actions:1, subTargets:0, depth:1, pid:17,   kids:[],
+       branches:["France","Corporate"],              baselineYear:2021, targetYear:2029, functionArea:"Corporate"},
+      {id:26, name:"Logistics Optimization",           track:"Scope 3", objective:"−35%",  owner:"Hans Weber",     region:"Europe",    actions:0, subTargets:0, depth:1, pid:17,   kids:[],
+       branches:["Europe","Supply Chain"],           baselineYear:2021, targetYear:2029, functionArea:"Supply Chain"},
+      {id:27, name:"Digital Services Footprint",       track:"Scope 3", objective:"−20%",  owner:"James Miller",   region:"Americas",  actions:0, subTargets:0, depth:1, pid:17,   kids:[],
+       branches:["Americas","IT"],                   baselineYear:2021, targetYear:2029, functionArea:"IT"},
+
+      // ── Water ────────────────────────────────────────────────────────
+      {id:28, name:"Reduce Water Consumption −20%",    track:"Water",   objective:"−20%",  owner:"Yuki Tanaka",    region:"APAC",      actions:0, subTargets:2, depth:0, pid:null, kids:[29,30],
+       branches:["APAC"],                            baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+
+      // L1
+      {id:29, name:"Cooling System Retrofit — Tokyo",  track:"Water",   objective:"−30%",  owner:"Yuki Tanaka",    region:"APAC",      actions:2, subTargets:0, depth:1, pid:28,   kids:[],
+       branches:["APAC","Factory"],                  baselineYear:2021, targetYear:2029, functionArea:"Factory"},
+      {id:30, name:"Water Recycling — Lyon Plant",     track:"Water",   objective:"−15%",  owner:"Pierre Dubois",  region:"France",    actions:1, subTargets:0, depth:1, pid:28,   kids:[],
+       branches:["France","Factory"],                baselineYear:2021, targetYear:2029, functionArea:"Factory"},
+    ]
+  },
+
+  fy2027: {
+    name: 'FY2027 Ambitious Plan',
+    date: 'Mar 22, 2026',
+    targets: [
+      {id:101, name:"Net Zero Scope 1",           track:"Scope 1", objective:"−100%", owner:"Marie Laurent",  region:"Global",    actions:2, subTargets:0, depth:0, pid:null, kids:[],
+       branches:["Global"],                       baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:102, name:"Net Zero Scope 2",           track:"Scope 2", objective:"−100%", owner:"Marie Laurent",  region:"Global",    actions:3, subTargets:0, depth:0, pid:null, kids:[],
+       branches:["Global"],                       baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:103, name:"Scope 3 Halving",            track:"Scope 3", objective:"−50%",  owner:"Lisa Chen",      region:"Global",    actions:1, subTargets:0, depth:0, pid:null, kids:[],
+       branches:["Global","Supply Chain"],        baselineYear:2021, targetYear:2030, functionArea:"Supply Chain"},
+      {id:104, name:"Full Renewable Energy",      track:"Scope 2", objective:"−100%", owner:"Sophie Martin",  region:"Europe",    actions:4, subTargets:0, depth:0, pid:null, kids:[],
+       branches:["Europe","Operations"],          baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+      {id:105, name:"Zero Business Travel",       track:"Scope 3", objective:"−100%", owner:"Sophie Martin",  region:"Global",    actions:0, subTargets:0, depth:0, pid:null, kids:[],
+       branches:["Global","Corporate"],           baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:106, name:"Water Neutral Operations",   track:"Water",   objective:"−100%", owner:"Yuki Tanaka",    region:"APAC",      actions:0, subTargets:0, depth:0, pid:null, kids:[],
+       branches:["APAC","Operations"],            baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+      {id:107, name:"Circular Packaging",         track:"Waste",   objective:"−100%", owner:"Hans Weber",     region:"Europe",    actions:2, subTargets:0, depth:0, pid:null, kids:[],
+       branches:["Europe","Packaging"],           baselineYear:2021, targetYear:2030, functionArea:"Packaging"},
+      {id:108, name:"Carbon Removal Investment",  track:"Scope 1", objective:"−20%",  owner:"James Miller",   region:"Americas",  actions:0, subTargets:0, depth:0, pid:null, kids:[],
+       branches:["Americas","Corporate"],         baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+    ]
+  },
+
+  conservative: {
+    name: 'Conservative Baseline',
+    date: 'Jan 15, 2026',
+    targets: [
+      {id:201, name:"Scope 1 Compliance", track:"Scope 1", objective:"−10%", owner:"Marie Laurent",  region:"Global",   actions:5, subTargets:0, depth:0, pid:null, kids:[],
+       branches:["Global"],                    baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:202, name:"Scope 2 Efficiency", track:"Scope 2", objective:"−15%", owner:"Sophie Martin",  region:"Europe",   actions:3, subTargets:0, depth:0, pid:null, kids:[],
+       branches:["Europe","Operations"],       baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+      {id:203, name:"Supplier Basics",    track:"Scope 3", objective:"−5%",  owner:"Lisa Chen",      region:"Global",   actions:2, subTargets:0, depth:0, pid:null, kids:[],
+       branches:["Global","Supply Chain"],     baselineYear:2021, targetYear:2030, functionArea:"Supply Chain"},
+      {id:204, name:"Water Monitoring",   track:"Water",   objective:"−5%",  owner:"Yuki Tanaka",    region:"APAC",     actions:1, subTargets:0, depth:0, pid:null, kids:[],
+       branches:["APAC","Operations"],         baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+      {id:205, name:"Waste Reporting",    track:"Waste",   objective:"−10%", owner:"Hans Weber",     region:"Germany",  actions:1, subTargets:0, depth:0, pid:null, kids:[],
+       branches:["Germany","Operations"],      baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+    ]
+  }
+};
+
+const SCENARIO_ORDER = ['fy2026','fy2027','conservative'];
+
+// ─────────────────────────────────────────────
+//  ACTIVE DATA
+// ─────────────────────────────────────────────
+let activeScenarioId = 'fy2026';
+let DATA = [];
+let TM   = {};
+
+function loadScenario(id){
+  activeScenarioId = id;
+  DATA = SCENARIOS[id].targets;
+  TM = {};
+  DATA.forEach(t => TM[t.id] = t);
+}
+
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+let expanded   = new Set();
+let searchQ    = '';
+let searchTimer= null;
+let filters    = {region:[], functionArea:[]};
+let sortCol    = null;
+let sortDir    = 'asc';
+let detailId    = null;
+let lastDetailId= null; // tracks which row to highlight on return
+let savedScroll = 0;
+
+function defaultExpanded(){
+  // All rows collapsed by default — only depth-0 targets visible on load
+  return new Set();
+}
+
+// ─────────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────────
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function trackCls(t){return{'Scope 1':'t-s1','Scope 2':'t-s2','Scope 3':'t-s3','Water':'t-water','Waste':'t-waste'}[t]||'t-s1';}
+
+function ancestors(id){
+  const list=[];let t=TM[id];
+  while(t&&t.pid!=null){t=TM[t.pid];if(t)list.unshift(t.id);}
+  return list;
+}
+function descendants(id){
+  const out=[];const t=TM[id];if(!t)return out;
+  for(const k of t.kids){out.push(k);out.push(...descendants(k));}
+  return out;
+}
+function sortList(arr){
+  if(!sortCol)return arr;
+  return[...arr].sort((a,b)=>{
+    let av=a[sortCol],bv=b[sortCol];
+    // branches sort by first branch name
+    if(sortCol==='branches'){
+      av=(a.branches&&a.branches[0])||'';
+      bv=(b.branches&&b.branches[0])||'';
+    }
+    if(typeof av==='string')av=av.toLowerCase();
+    if(typeof bv==='string')bv=bv.toLowerCase();
+    if(av<bv)return sortDir==='asc'?-1:1;
+    if(av>bv)return sortDir==='asc'?1:-1;
+    return 0;
+  });
+}
+function countTracks(){return new Set(DATA.map(t=>t.track)).size;}
+// Returns IDs of descendants that are currently rendered in the DOM
+function visibleDescendants(id){
+  const tb=document.getElementById('tbody');
+  return descendants(id).filter(did=>tb.querySelector(`tr[data-id="${did}"]`));
+}
+// Remove all cascade/hover classes from the tbody
+function clearCascade(){
+  const tb=document.getElementById('tbody');
+  tb.querySelectorAll('tr.row-hover').forEach(r=>r.classList.remove('row-hover'));
+  tb.querySelectorAll('tr.cascade-hi').forEach(r=>r.classList.remove('cascade-hi'));
+}
+// Recursive sum of actions across all leaf descendants (or own value if leaf)
+function sumActions(id){
+  const t=TM[id];if(!t)return 0;
+  if(!t.kids||t.kids.length===0)return t.actions;
+  return t.kids.reduce((s,k)=>s+sumActions(k),0);
+}
+
+// ─────────────────────────────────────────────
+//  SCENARIO SWITCHER
+// ─────────────────────────────────────────────
+function toggleScenarioPop(){
+  const pop=document.getElementById('sc-pop');
+  const wasOpen=pop.classList.contains('open');
+  closePops();
+  if(!wasOpen){renderScenarioPop();pop.classList.add('open');}
+}
+
+function renderScenarioPop(){
+  const list=document.getElementById('sc-pop-list');
+  list.innerHTML='';
+  SCENARIO_ORDER.forEach(sid=>{
+    const sc=SCENARIOS[sid];
+    const isActive=sid===activeScenarioId;
+    const item=document.createElement('div');
+    item.className='sc-item';
+    item.onclick=()=>switchScenario(sid);
+    item.innerHTML=`
+      <div class="sc-item-left">
+        <span class="sc-check">${isActive?'✓':''}</span>
+        <span class="sc-item-name${isActive?' active':''}">${esc(sc.name)}</span>
+      </div>
+      <span class="sc-item-meta">${sc.targets.length} targets</span>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function switchScenario(id){
+  if(id===activeScenarioId){closePops();return;}
+  loadScenario(id);
+  expanded=defaultExpanded();
+  searchQ='';filters={region:[],functionArea:[]};
+  sortCol=null;sortDir='asc';
+  lastDetailId=null;
+
+  document.getElementById('search-input').value='';
+  document.getElementById('search-clear').style.display='none';
+  document.getElementById('search-count').classList.add('hidden');
+  document.querySelectorAll('#filter-pop input[type=checkbox]').forEach(cb=>cb.checked=false);
+  syncFilterPills();
+  syncSortUI();
+
+  closePops();
+  syncScenarioUI();
+  // If we're switching scenarios while on a detail view, return to scenario view
+  if(detailId!=null){
+    detailId=null;
+    document.getElementById('scenario-view').style.display='block';
+    document.getElementById('detail-view').style.display='none';
+  }
+  updateHash(id,null);
+  render();
+}
+
+function syncScenarioUI(){
+  const sc=SCENARIOS[activeScenarioId];
+  document.getElementById('sc-title').textContent=sc.name;
+  document.title=sc.name+' — Sweep';
+  const nT=DATA.length,nTr=sc.trackCount||countTracks();
+  document.getElementById('sc-subtitle').textContent=
+    `${nT} target${nT!==1?'s':''} · ${nTr} track${nTr!==1?'s':''} · Last edited ${sc.date}`;
+  // Breadcrumb lives only on the detail view; no breadcrumb on scenario view
+}
+
+// ─────────────────────────────────────────────
+//  TARGET SWITCHER (siblings at the same level)
+// ─────────────────────────────────────────────
+function getSiblings(id){
+  const t=TM[id];if(!t)return[];
+  if(t.pid===null||t.pid===undefined){
+    return DATA.filter(x=>x.pid===null||x.pid===undefined);
+  }
+  const parent=TM[t.pid];
+  if(!parent||!parent.kids)return[t];
+  return parent.kids.map(k=>TM[k]).filter(Boolean);
+}
+
+function toggleTargetPop(){
+  const pop=document.getElementById('tg-pop');
+  if(!pop)return;
+  const wasOpen=pop.classList.contains('open');
+  closePops();
+  if(!wasOpen){renderTargetPop();pop.classList.add('open');}
+}
+
+function renderTargetPop(){
+  const list=document.getElementById('tg-pop-list');
+  if(!list||detailId==null)return;
+  list.innerHTML='';
+  const siblings=getSiblings(detailId);
+  siblings.forEach(s=>{
+    const isActive=s.id===detailId;
+    const kidCount=s.kids?s.kids.length:0;
+    const meta=kidCount>0
+      ?`${kidCount} sub-target${kidCount!==1?'s':''}`
+      :(s.actions>0?`${s.actions} action${s.actions!==1?'s':''}`:'—');
+    const item=document.createElement('div');
+    item.className='sc-item';
+    item.onclick=()=>switchTarget(s.id);
+    item.innerHTML=`
+      <div class="sc-item-left">
+        <span class="sc-check">${isActive?'✓':''}</span>
+        <span class="sc-item-name${isActive?' active':''}" title="${esc(s.name)}">${esc(s.name)}</span>
+      </div>
+      <span class="sc-item-meta">${meta}</span>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function switchTarget(id){
+  if(id===detailId){closePops();return;}
+  closePops();
+  renderDetail(id);
+}
+
+// ─────────────────────────────────────────────
+//  FILTER / SEARCH
+// ─────────────────────────────────────────────
+function passesFilter(t){
+  if(filters.region.length&&!filters.region.includes(t.region))return false;
+  if(filters.functionArea.length&&!filters.functionArea.includes(t.functionArea))return false;
+  return true;
+}
+function passesSearch(t){
+  if(!searchQ)return true;
+  const q=searchQ.toLowerCase();
+  if(t.name.toLowerCase().includes(q))return true;
+  if(t.branches&&t.branches.some(b=>b.toLowerCase().includes(q)))return true;
+  if(t.functionArea&&t.functionArea.toLowerCase().includes(q))return true;
+  if(t.region&&t.region.toLowerCase().includes(q))return true;
+  return false;
+}
+function computeVisible(){
+  const matchSet=new Set(),ctxSet=new Set();
+  DATA.forEach(t=>{
+    if(passesFilter(t)&&passesSearch(t)){
+      matchSet.add(t.id);
+      ancestors(t.id).forEach(a=>ctxSet.add(a));
+    }
+  });
+  return{matchSet,ctxSet};
+}
+
+// ─────────────────────────────────────────────
+//  RENDER
+// ─────────────────────────────────────────────
+function render(){
+  clearCascade(); // remove any hover state before rebuilding rows
+  const tbody=document.getElementById('tbody');
+  const emptyMsg=document.getElementById('empty-msg');
+  tbody.innerHTML='';
+
+  const hasC=searchQ||filters.region.length||filters.functionArea.length;
+  const{matchSet,ctxSet}=computeVisible();
+
+  const countEl=document.getElementById('search-count');
+  if(searchQ){
+    countEl.textContent=matchSet.size+'/'+DATA.length;
+    countEl.classList.remove('hidden');
+  }else{countEl.classList.add('hidden');}
+
+  const rows=buildHierarchy(matchSet,ctxSet,hasC);
+  if(!rows.length){emptyMsg.classList.remove('hidden');}
+  else{emptyMsg.classList.add('hidden');rows.forEach(r=>tbody.appendChild(r));}
+}
+
+function buildHierarchy(matchSet,ctxSet,hasC){
+  const rows=[];
+  function walk(id){
+    const t=TM[id];if(!t)return;
+    const isMatch=matchSet.has(id),isCtx=ctxSet.has(id);
+    if(hasC&&!isMatch&&!isCtx)return;
+    rows.push(makeRow(t,hasC&&!isMatch&&isCtx));
+    const forceOpen=hasC&&isCtx&&t.kids.length>0;
+    const isOpen=expanded.has(id)||forceOpen;
+    if(isOpen&&t.kids.length>0){
+      sortList(t.kids.map(k=>TM[k])).forEach(c=>walk(c.id));
+    }
+  }
+  sortList(DATA.filter(t=>t.depth===0)).forEach(t=>walk(t.id));
+  return rows;
+}
+
+function renderBranches(branches){
+  if(!branches||!branches.length)return '<span class="cell-sec" style="color:var(--text-40);">—</span>';
+  const MAX_VISIBLE=2;
+  const shown=branches.slice(0,MAX_VISIBLE);
+  const extra=branches.length-shown.length;
+  let html='<div class="branches-cell">';
+  shown.forEach(b=>{html+=`<span class="bpill" title="${esc(b)}">${esc(b)}</span>`;});
+  if(extra>0)html+=`<span class="bpill-more">+${extra}</span>`;
+  html+='</div>';
+  return html;
+}
+
+function makeRow(t,ctxOnly){
+  const tr=document.createElement('tr');
+  tr.dataset.id=t.id;
+  const indent=t.depth*24;
+  const hasKids=t.kids&&t.kids.length>0;
+  const isExp=expanded.has(t.id);
+  // Actions: leaf shows own count; parent shows recursive sum of all leaf descendants
+  const dispAct=hasKids?sumActions(t.id):t.actions;
+  const actCls=hasKids
+    ?(dispAct===0?'num-0':'num-agg')   // parent: agg secondary color; 0 = danger
+    :(t.actions===0?'num-0':'num');     // leaf:   own count, standard colors
+  tr.innerHTML=`
+    <td class="td-exp"></td>
+    <td>
+      <div class="name-cell" style="padding-left:${indent}px;">
+        <span class="chev-slot">
+          ${hasKids?`<button class="chev" onclick="toggleRow(${t.id})">${isExp?'▼':'▶'}</button>`:''}
+        </span>
+        <span class="name-link ${hasKids?'name-parent':'name-leaf'}${ctxOnly?' name-ctx':''}"
+          onclick="openDetail(${t.id})" title="${esc(t.name)}">${esc(t.name)}</span>
+      </div>
+    </td>
+    <td class="num-cell"><span class="${actCls}">${dispAct}</span></td>
+    <td>${renderBranches(t.branches)}</td>
+    <td class="cell-sec">${t.baselineYear??'—'}</td>
+    <td class="cell-sec">${t.targetYear??'—'}</td>
+    <td class="cell-sec">${esc(t.region)}</td>
+    <td class="cell-sec">${esc(t.functionArea||'—')}</td>
+  `;
+  return tr;
+}
+
+// ─────────────────────────────────────────────
+//  TABLE INTERACTIONS
+// ─────────────────────────────────────────────
+function toggleRow(id){
+  if(expanded.has(id)){
+    const desc=descendants(id);
+    expanded.delete(id);
+    desc.forEach(d=>expanded.delete(d));
+  }else expanded.add(id);
+  render();
+}
+
+function onSearchInput(v){
+  clearTimeout(searchTimer);
+  searchTimer=setTimeout(()=>{
+    searchQ=v.trim();
+    document.getElementById('search-clear').style.display=searchQ?'block':'none';
+    render();
+  },200);
+}
+function clearSearch(){
+  document.getElementById('search-input').value='';searchQ='';
+  document.getElementById('search-clear').style.display='none';
+  document.getElementById('search-count').classList.add('hidden');
+  render();
+}
+
+function onFilter(group,val,checked){
+  if(checked){if(!filters[group].includes(val))filters[group].push(val);}
+  else filters[group]=filters[group].filter(v=>v!==val);
+  syncFilterPills();render();
+}
+
+function syncFilterPills(){
+  const container=document.getElementById('filter-pills');
+  const clearBtn=document.getElementById('clear-all-btn');
+  container.innerHTML='';
+  let any=false;
+  const labels={region:'Region',functionArea:'Function'};
+  ['region','functionArea'].forEach(grp=>{
+    filters[grp].forEach(v=>{
+      any=true;
+      const pill=document.createElement('div');
+      pill.className='fpill';
+      pill.innerHTML=`${labels[grp]}: ${esc(v)} <button class="fpill-x" onclick="removeFilter('${grp}','${esc(v)}')" title="Remove">×</button>`;
+      container.appendChild(pill);
+    });
+  });
+  clearBtn.classList.toggle('hidden',!any);
+  document.getElementById('filter-btn').classList.toggle('active',any);
+}
+
+function removeFilter(grp,val){
+  filters[grp]=filters[grp].filter(v=>v!==val);
+  document.querySelectorAll('#filter-pop input[type=checkbox]').forEach(cb=>{
+    if(cb.value===val){const h=cb.getAttribute('onchange')||'';if(h.includes(`'${grp}'`))cb.checked=false;}
+  });
+  syncFilterPills();render();
+}
+
+function clearAllFilters(){
+  filters={region:[],functionArea:[]};
+  document.querySelectorAll('#filter-pop input[type=checkbox]').forEach(cb=>cb.checked=false);
+  syncFilterPills();render();
+}
+
+function doSort(col){
+  if(sortCol===col){if(sortDir==='asc')sortDir='desc';else{sortCol=null;sortDir='asc';}}
+  else{sortCol=col;sortDir='asc';}
+  syncSortUI();render();
+}
+function clearSort(){sortCol=null;sortDir='asc';syncSortUI();render();}
+function syncSortUI(){
+  ['name','actions','branches','baselineYear','targetYear','region','functionArea'].forEach(c=>{
+    const el=document.getElementById('th-'+c);
+    if(el)el.textContent=sortCol===c?(sortDir==='asc'?' ▲':' ▼'):'';
+  });
+}
+
+// ─────────────────────────────────────────────
+//  POPOVERS
+// ─────────────────────────────────────────────
+function togglePop(id){
+  const el=document.getElementById(id);
+  const wasOpen=el.classList.contains('open');
+  closePops();
+  if(!wasOpen)el.classList.add('open');
+}
+function closePops(){
+  document.querySelectorAll('.popover.open').forEach(p=>p.classList.remove('open'));
+  const scPop=document.getElementById('sc-pop');
+  if(scPop)scPop.classList.remove('open');
+  const tgPop=document.getElementById('tg-pop');
+  if(tgPop)tgPop.classList.remove('open');
+}
+
+document.addEventListener('click',function(e){
+  const scWrap=document.getElementById('sc-trigger-wrap');
+  if(scWrap&&!scWrap.contains(e.target))document.getElementById('sc-pop').classList.remove('open');
+  const tgWrap=document.getElementById('tg-trigger-wrap');
+  if(tgWrap&&!tgWrap.contains(e.target)){
+    const tgPop=document.getElementById('tg-pop');
+    if(tgPop)tgPop.classList.remove('open');
+  }
+  ['filter-wrap'].forEach(wid=>{
+    const w=document.getElementById(wid);
+    if(w&&!w.contains(e.target)){const pop=w.querySelector('.popover');if(pop)pop.classList.remove('open');}
+  });
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePops();});
+
+// ─────────────────────────────────────────────
+//  HASH ROUTING (Maze-friendly URLs)
+//  #/sc/{scenarioId}              → scenario view
+//  #/sc/{scenarioId}/t/{targetId} → detail view
+// ─────────────────────────────────────────────
+let _suppressHashApply=false;
+function getHashState(){
+  const h=window.location.hash.slice(1);
+  const m=h.match(/^\/sc\/([^\/]+)(?:\/t\/(\d+))?/);
+  if(!m)return{scenarioId:null,targetId:null};
+  return{scenarioId:m[1]||null,targetId:m[2]?parseInt(m[2],10):null};
+}
+function updateHash(scenarioId,targetId){
+  const newHash=targetId!=null
+    ?`#/sc/${scenarioId}/t/${targetId}`
+    :`#/sc/${scenarioId}`;
+  if(window.location.hash!==newHash){
+    _suppressHashApply=true;
+    try{
+      history.pushState(null,'',newHash);
+    }catch(e){
+      // file:// origins block pushState; fall back to direct hash assignment
+      window.location.hash=newHash;
+    }
+    setTimeout(()=>{_suppressHashApply=false;},0);
+  }
+}
+function applyHashState(){
+  if(_suppressHashApply)return;
+  const{scenarioId,targetId}=getHashState();
+  const targetScenario=(scenarioId&&SCENARIOS[scenarioId])?scenarioId:SCENARIO_ORDER[0];
+  if(targetScenario!==activeScenarioId){
+    loadScenario(targetScenario);
+    expanded=defaultExpanded();
+    searchQ='';filters={region:[],functionArea:[]};
+    sortCol=null;sortDir='asc';
+    syncScenarioUI();
+  }
+  closePops();
+  if(targetId!=null&&TM[targetId]){
+    savedScroll=0;detailId=targetId;
+    document.getElementById('scenario-view').style.display='none';
+    document.getElementById('detail-view').style.display='block';
+    window.scrollTo(0,0);
+    renderDetail(targetId);
+  } else {
+    detailId=null;
+    document.getElementById('scenario-view').style.display='block';
+    document.getElementById('detail-view').style.display='none';
+    window.scrollTo(0,0);
+    render();
+  }
+}
+window.addEventListener('popstate',applyHashState);
+window.addEventListener('hashchange',applyHashState);
+
+// ─────────────────────────────────────────────
+//  DETAIL VIEW
+// ─────────────────────────────────────────────
+function openDetail(id){
+  savedScroll=window.scrollY;detailId=id;
+  document.getElementById('scenario-view').style.display='none';
+  document.getElementById('detail-view').style.display='block';
+  window.scrollTo(0,0);renderDetail(id);
+  updateHash(activeScenarioId,id);
+}
+
+function renderDetail(id){
+  detailId=id;lastDetailId=id;
+  const t=TM[id];if(!t)return;
+  const sc=SCENARIOS[activeScenarioId];
+
+  // Breadcrumb: scenario name (clickable back to scenario page) → ancestors → current
+  const bc=document.getElementById('det-breadcrumb');
+  let html=`<span class="bc-link" onclick="returnToScenario()">${esc(sc.name)}</span>`;
+  ancestors(id).forEach(aid=>{
+    const at=TM[aid];
+    html+=`<span class="bc-sep">/</span><span class="bc-link" onclick="openDetail(${aid})">${esc(at.name)}</span>`;
+  });
+  html+=`<span class="bc-sep">/</span><span class="bc-current">${esc(t.name)}</span>`;
+  bc.innerHTML=html;
+
+  // Title (as target switcher trigger) + short description
+  document.getElementById('det-title-wrap').innerHTML=`
+    <div class="tg-trigger-wrap" id="tg-trigger-wrap">
+      <div class="tg-trigger" onclick="toggleTargetPop()">
+        <h1 class="detail-title">${esc(t.name)}</h1>
+        <span class="sc-chev">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>
+        </span>
+      </div>
+      <p class="detail-desc">Reduce value chain (Scope 3) emissions in line with SBTi-approved science-based pathways.</p>
+
+      <!-- Target switcher popover (siblings at same level) -->
+      <div class="sc-pop tg-pop" id="tg-pop">
+        <span class="sc-pop-label">Targets at this level</span>
+        <div id="tg-pop-list"></div>
+      </div>
+    </div>
+  `;
+
+  // Settings card
+  const brArr=t.branches||[];
+  const brHtml=brArr.length
+    ?brArr.map(b=>`<span class="bpill">${esc(b)}</span>`).join('')
+    :'<span class="cell-sec" style="color:var(--text-40);">—</span>';
+  document.getElementById('det-settings').innerHTML=`
+    <div class="settings-card">
+      <div class="sc-col">
+        <span class="sc-label">Track</span>
+        <span class="sc-val">${esc(t.track)} (tCO2e)</span>
+      </div>
+      <div class="sc-col">
+        <span class="sc-label">Forecast</span>
+        <span class="sc-val">🚀 Emissions forecast (tCO2e)</span>
+      </div>
+      <div class="sc-col sc-col-branches">
+        <span class="sc-label">Branches</span>
+        <span class="sc-val sc-val-branches">${brHtml}</span>
+      </div>
+      <div class="sc-col">
+        <span class="sc-label">Objective</span>
+        <span class="sc-val">Percentage ${esc(t.objective)}</span>
+      </div>
+      <div class="sc-col">
+        <span class="sc-label">Documentation</span>
+        <span class="sc-val">0 files</span>
+      </div>
+      <button class="sc-edit-btn" onclick="onEditTarget()" title="Edit settings">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 2.5l2 2L5 13l-3 1 1-3 8.5-8.5z"/></svg>
+        Edit
+      </button>
+    </div>
+  `;
+
+  document.getElementById('det-actions-head').textContent=t.actions===1?'1 action':t.actions+' actions';
+  document.getElementById('det-actions-body').innerHTML=t.actions===0
+    ?`<p class="no-actions">0 actions — add your first action</p>`
+    :`<ul class="action-list">${Array.from({length:t.actions},(_,i)=>`<li>Action ${i+1}</li>`).join('')}</ul>`;
+}
+
+function returnToScenario(){
+  const lid=lastDetailId;
+  if(lid&&TM[lid])ancestors(lid).forEach(aid=>expanded.add(aid));
+  document.getElementById('scenario-view').style.display='block';
+  document.getElementById('detail-view').style.display='none';
+  detailId=null;
+  updateHash(activeScenarioId,null);
+  if(lid)render();
+  setTimeout(()=>{
+    window.scrollTo(0,savedScroll);
+    if(lid){
+      setTimeout(()=>{
+        const row=document.querySelector(`tr[data-id="${lid}"]`);
+        if(row){
+          row.classList.add('row-returning');
+          setTimeout(()=>row.classList.remove('row-returning'),2700);
+        }
+        lastDetailId=null;
+      },30);
+    }
+  },0);
+}
+
+// ─────────────────────────────────────────────
+//  DETAIL ACTIONS (stubs — click = success for the test)
+// ─────────────────────────────────────────────
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer=setTimeout(()=>t.classList.remove('show'),1800);
+}
+function onAddTarget(){
+  console.log('[prototype] Add target clicked');
+  showToast('Add target (prototype)');
+}
+function onAddSubTarget(){
+  const t=TM[detailId];
+  if(!t)return;
+  console.log('[prototype] Add sub-target clicked for target id=',detailId,'name=',t.name);
+  showToast('Add sub-target (prototype)');
+}
+function onEditTarget(){
+  const t=TM[detailId];
+  if(!t)return;
+  console.log('[prototype] Edit clicked for target id=',detailId,'name=',t.name);
+  showToast('Edit target (prototype)');
+}
+
+// ─────────────────────────────────────────────
+//  INIT (respects hash on load)
+// ─────────────────────────────────────────────
+(function init(){
+  const{scenarioId,targetId}=getHashState();
+  const startScenario=(scenarioId&&SCENARIOS[scenarioId])?scenarioId:'fy2026';
+  loadScenario(startScenario);
+  expanded=defaultExpanded();
+  syncScenarioUI();
+  if(targetId!=null&&TM[targetId]){
+    detailId=targetId;
+    document.getElementById('scenario-view').style.display='none';
+    document.getElementById('detail-view').style.display='block';
+    renderDetail(targetId);
+  } else {
+    render();
+  }
+  if(!window.location.hash){
+    const initHash=`#/sc/${startScenario}${targetId!=null?`/t/${targetId}`:''}`;
+    try{
+      history.replaceState(null,'',initHash);
+    }catch(e){
+      window.location.hash=initHash;
+    }
+  }
+})();
+
+// ─────────────────────────────────────────────
+//  CASCADE HOVER
+// ─────────────────────────────────────────────
+(function(){
+  const tb=document.getElementById('tbody');
+
+  tb.addEventListener('mouseover',function(e){
+    const tr=e.target.closest('tr[data-id]');
+    // Moved onto a non-data row (sub-add line, group header) — clear everything
+    if(!tr){clearCascade();return;}
+    // Still within the same hovered row — nothing to do
+    if(tr.classList.contains('row-hover'))return;
+    clearCascade();
+    tr.classList.add('row-hover');
+    // Cascade highlight on descendants
+    const id=parseInt(tr.dataset.id);
+    visibleDescendants(id).forEach(did=>{
+      const row=tb.querySelector(`tr[data-id="${did}"]`);
+      // Skip rows with an active return highlight — that takes precedence
+      if(row&&!row.classList.contains('row-returning'))
+        row.classList.add('cascade-hi');
+    });
+  });
+
+  // Mouse has left the table body entirely
+  tb.addEventListener('mouseleave',clearCascade);
+})();
+</script>
+</body>
+</html>

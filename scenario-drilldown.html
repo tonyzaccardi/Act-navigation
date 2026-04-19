@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Maze universal snippet -->
+<script>
+(function (m, a, z, e) {
+  var s, t, u, v;
+  try {
+    t = m.sessionStorage.getItem('maze-us');
+  } catch (err) {}
+  if (!t) {
+    t = new Date().getTime();
+    try {
+      m.sessionStorage.setItem('maze-us', t);
+    } catch (err) {}
+  }
+  u = document.currentScript || (function () {
+    var w = document.getElementsByTagName('script');
+    return w[w.length - 1];
+  })();
+  v = u && u.nonce;
+  s = a.createElement('script');
+  s.src = z + '?apiKey=' + e;
+  s.async = true;
+  if (v) s.setAttribute('nonce', v);
+  a.getElementsByTagName('head')[0].appendChild(s);
+  m.mazeUniversalSnippetApiKey = e;
+})(window, document, 'https://snippet.maze.co/maze-universal-loader.js', '001f4ab7-3728-4f99-9ac2-495ebc6b9e5a');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Act — Drill-down prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Cursor Design System Tokens ── */
+:root {
+  --bg:         #f2f1ed;
+  --bg-light:   #f7f7f4;
+  --surf-100:   #f7f7f4;
+  --surf-200:   #f2f1ed;
+  --surf-300:   #ebeae5;
+  --surf-400:   #e6e5e0;
+  --surf-500:   #e1e0db;
+  --text:       #26251e;
+  --text-55:    rgba(38,37,30,0.55);
+  --text-40:    rgba(38,37,30,0.40);
+  --text-25:    rgba(38,37,30,0.25);
+  --orange:     #f54e00;
+  --crimson:    #cf2d56;
+  --gold:       #c08532;
+  --success:    #1f8a65;
+
+  --bdr-10:     rgba(38,37,30,0.10);
+  --bdr-20:     rgba(38,37,30,0.20);
+  --bdr-55:     rgba(38,37,30,0.55);
+  --bdr-row:    rgba(38,37,30,0.07);
+
+  --shadow-card:    rgba(0,0,0,0.14) 0px 28px 70px, rgba(0,0,0,0.10) 0px 14px 32px, rgba(38,37,30,0.10) 0px 0px 0px 1px;
+  --shadow-ambient: rgba(0,0,0,0.02) 0px 0px 16px, rgba(0,0,0,0.008) 0px 0px 8px;
+  --shadow-focus:   rgba(0,0,0,0.10) 0px 4px 12px;
+
+  --font-ui:    'Inter', system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-mono:  ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{
+  font-family:var(--font-ui);
+  background:var(--bg);
+  color:var(--text);
+  min-width:1280px;
+  font-size:16px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── Layout ── */
+.wrap{max-width:1200px;margin:0 auto;padding:0 36px;}
+
+/* ── Prototype switch link (top-right) ── */
+.proto-switch{
+  position:fixed;top:10px;right:16px;z-index:500;
+  font-size:11px;font-weight:500;color:var(--text-40);
+  padding:5px 10px;border-radius:6px;
+  text-decoration:none;background:var(--surf-100);
+  border:1px solid var(--bdr-10);
+  transition:color .15s,border-color .15s;
+}
+.proto-switch:hover{color:var(--orange);border-color:var(--bdr-20);}
+
+/* ── Breadcrumb bar ── */
+.breadcrumb-bar{
+  position:sticky;top:0;z-index:120;
+  background:var(--bg);
+  border-bottom:1px solid var(--bdr-10);
+  height:44px;display:flex;align-items:center;
+}
+nav.bc{display:flex;align-items:center;gap:2px;flex-wrap:wrap;}
+.bc-link{
+  font-size:13px;font-weight:500;color:var(--text-55);
+  cursor:pointer;padding:2px 4px;border-radius:4px;
+  text-decoration:none;transition:color .15s;
+}
+.bc-link:hover{color:var(--text);}
+.bc-sep{font-size:13px;color:var(--text-25);padding:0 1px;}
+.bc-current{font-size:13px;font-weight:500;color:var(--text);padding:2px 4px;}
+
+/* ── Page header ── */
+.page-header{padding:28px 0 20px;display:flex;align-items:flex-start;justify-content:space-between;gap:24px;}
+.page-header .subtitle{
+  margin-top:5px;font-size:13px;font-weight:400;
+  color:var(--text-55);letter-spacing:.01em;
+}
+
+/* ── Scenario / Target title trigger ── */
+.sc-trigger-wrap{position:relative;}
+.sc-trigger{
+  display:inline-flex;align-items:center;gap:8px;
+  cursor:pointer;user-select:none;
+}
+.sc-trigger h1{
+  font-size:28px;font-weight:600;line-height:1.2;
+  color:var(--text);letter-spacing:-.5px;
+  transition:color .15s;
+}
+.sc-trigger:hover h1{color:var(--crimson);}
+.sc-trigger:hover .sc-chev{color:var(--crimson);}
+.sc-chev{color:var(--text-40);transition:color .15s;flex-shrink:0;margin-top:2px;}
+
+/* ── Switcher popover ── */
+.sc-pop{
+  position:absolute;top:calc(100% + 8px);left:0;
+  width:420px;
+  background:var(--surf-200);
+  border-radius:8px;
+  box-shadow:var(--shadow-card);
+  z-index:400;display:none;
+  padding:6px 0;
+  overflow:hidden;
+  max-height:420px;overflow-y:auto;
+}
+.sc-pop.open{display:block;}
+.sc-pop-label{
+  font-size:11px;font-weight:600;letter-spacing:.06em;
+  color:var(--text-40);text-transform:uppercase;
+  padding:6px 14px 8px;display:block;
+}
+.sc-item{
+  display:flex;align-items:center;justify-content:space-between;
+  height:40px;padding:0 14px;cursor:pointer;
+  transition:background .12s;gap:10px;
+}
+.sc-item:hover{background:var(--surf-400);}
+.sc-item-left{display:flex;align-items:center;gap:8px;min-width:0;}
+.sc-check{font-size:12px;color:var(--orange);width:14px;flex-shrink:0;font-weight:600;}
+.sc-item-name{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sc-item-name.active{color:var(--orange);font-weight:600;}
+.sc-item-meta{font-size:12px;color:var(--text-55);flex-shrink:0;}
+
+/* Target trigger uses same pattern */
+.tg-trigger-wrap{position:relative;}
+.tg-trigger{
+  display:inline-flex;align-items:center;gap:8px;
+  cursor:pointer;user-select:none;
+}
+.tg-trigger h1{
+  font-size:28px;font-weight:600;line-height:1.2;
+  color:var(--text);letter-spacing:-.5px;
+  transition:color .15s;
+}
+.tg-trigger:hover h1{color:var(--crimson);}
+.tg-trigger:hover .sc-chev{color:var(--crimson);}
+
+/* ── Header right-side buttons ── */
+.header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;padding-top:6px;}
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--font-ui);font-size:13px;font-weight:500;
+  height:32px;padding:0 12px;border-radius:6px;
+  border:1px solid var(--bdr-10);background:var(--surf-100);
+  color:var(--text);cursor:pointer;transition:all .15s;
+}
+.btn:hover{background:var(--surf-300);border-color:var(--bdr-20);}
+.btn-primary{
+  background:var(--text);color:var(--bg);border-color:var(--text);
+}
+.btn-primary:hover{background:#000;border-color:#000;}
+.btn-icon{
+  width:32px;height:32px;padding:0;justify-content:center;
+}
+.btn svg{width:13px;height:13px;}
+
+/* ── Settings card (target pages) ── */
+.settings-card{
+  display:flex;align-items:center;gap:32px;
+  background:var(--surf-100);border:1px solid var(--bdr-10);
+  border-radius:10px;padding:16px 20px;
+  margin-bottom:28px;
+  box-shadow:var(--shadow-ambient);
+}
+.sc-col{
+  display:flex;flex-direction:column;gap:6px;
+  min-width:0;flex:1 1 auto;
+}
+.sc-col-branches{flex:1.4 1 auto;}
+.sc-label{
+  font-size:10px;font-weight:600;letter-spacing:.08em;
+  color:var(--text-40);text-transform:uppercase;
+}
+.sc-val{
+  font-size:13px;font-weight:500;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.sc-val-branches{
+  display:flex;gap:6px;flex-wrap:wrap;white-space:normal;
+}
+.bpill{
+  display:inline-flex;align-items:center;
+  font-size:11px;font-weight:500;
+  height:22px;padding:0 8px;border-radius:11px;
+  background:var(--surf-300);color:var(--text);
+  border:1px solid var(--bdr-10);
+}
+.sc-edit-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--font-ui);font-size:12px;font-weight:500;
+  height:28px;padding:0 10px;border-radius:6px;
+  border:1px solid var(--bdr-10);background:var(--bg);
+  color:var(--text-55);cursor:pointer;transition:all .15s;
+  flex-shrink:0;margin-left:8px;
+}
+.sc-edit-btn:hover{color:var(--text);border-color:var(--bdr-20);}
+.sc-edit-btn svg{width:11px;height:11px;}
+
+/* ── Section title ── */
+.section-title{
+  font-size:14px;font-weight:600;color:var(--text);
+  margin-bottom:12px;display:flex;align-items:center;
+  justify-content:space-between;gap:12px;
+}
+.section-title .count{color:var(--text-55);font-weight:500;}
+
+/* ── Target list (drill-down rows) ── */
+/* Columns match nested-table: Name / # Actions / Branches / Baseline / Target / Region / Function / chevron */
+.tlist{
+  background:var(--surf-100);border:1px solid var(--bdr-10);
+  border-radius:10px;overflow:hidden;
+  box-shadow:var(--shadow-ambient);
+}
+.tlist-header{
+  display:grid;
+  grid-template-columns: 1fr 95px 90px 180px 110px 110px 110px 120px 28px;
+  align-items:center;gap:16px;
+  padding:10px 18px;
+  border-bottom:1px solid var(--bdr-10);
+  background:var(--surf-200);
+  font-size:11px;font-weight:600;letter-spacing:.06em;
+  color:var(--text-40);text-transform:uppercase;
+}
+.tlist-header .th-r{text-align:right;}
+.trow{
+  display:grid;
+  grid-template-columns: 1fr 95px 90px 180px 110px 110px 110px 120px 28px;
+  align-items:center;gap:16px;
+  padding:14px 18px;
+  border-bottom:1px solid var(--bdr-row);
+  cursor:pointer;transition:background .12s;
+}
+.trow:last-child{border-bottom:none;}
+.trow:hover{background:var(--surf-300);}
+.trow-name{
+  display:flex;flex-direction:column;gap:3px;min-width:0;
+}
+.trow-name .n-name{
+  font-size:14px;font-weight:600;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.trow-name .n-sub{
+  font-size:12px;color:var(--text-55);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.trow-cell{font-size:13px;color:var(--text);}
+.trow-cell-sec{font-size:13px;color:var(--text-55);}
+.trow-num{font-size:13px;color:var(--text);text-align:right;font-variant-numeric:tabular-nums;}
+.trow-num.num-0{color:var(--crimson);font-weight:600;}
+.trow-num.num-agg{color:var(--text-55);}
+.trow .chev-r{color:var(--text-40);justify-self:end;transition:color .15s;}
+.trow:hover .chev-r{color:var(--text);}
+.trow-branches{display:flex;gap:4px;flex-wrap:wrap;overflow:hidden;max-height:26px;}
+.trow-branches .bpill{height:20px;font-size:10.5px;padding:0 7px;}
+
+/* ── Actions list (leaf page) ── */
+.action-list{
+  background:var(--surf-100);border:1px solid var(--bdr-10);
+  border-radius:10px;overflow:hidden;list-style:none;
+  box-shadow:var(--shadow-ambient);
+}
+.action-list li{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 18px;font-size:13px;color:var(--text);
+  border-bottom:1px solid var(--bdr-row);
+}
+.action-list li:last-child{border-bottom:none;}
+.action-list li::before{
+  content:'';width:6px;height:6px;border-radius:50%;
+  background:var(--orange);flex-shrink:0;
+}
+.no-actions{
+  background:var(--surf-100);border:1px dashed var(--bdr-20);
+  border-radius:10px;padding:36px 18px;text-align:center;
+  font-size:13px;color:var(--text-55);
+}
+
+/* ── Empty state ── */
+.empty-state{
+  background:var(--surf-100);border:1px dashed var(--bdr-20);
+  border-radius:10px;padding:56px 18px;text-align:center;
+}
+.empty-state .emoji{font-size:24px;margin-bottom:10px;}
+.empty-state .msg{font-size:14px;color:var(--text-55);margin-bottom:12px;}
+
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<a href="scenario-details.html" class="proto-switch" title="Switch to nested-table prototype">↔ Nested table</a>
+
+<!-- BREADCRUMB BAR (always visible; empty on scenario root) -->
+<div class="breadcrumb-bar">
+  <div class="wrap" style="display:flex;align-items:center;">
+    <nav class="bc" id="breadcrumb"></nav>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div id="header-title"></div>
+    <div class="header-actions" id="header-actions"></div>
+  </div>
+
+  <!-- SETTINGS CARD (only on target pages) -->
+  <div id="settings-slot"></div>
+
+  <!-- SECTION TITLE -->
+  <div id="section-title" class="section-title hidden"></div>
+
+  <!-- MAIN LIST AREA -->
+  <div id="main-list"></div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  DATA
+// ─────────────────────────────────────────────
+const SCENARIOS = {
+  fy2026: {
+    name: 'FY2026 Reduction Plan',
+    date: 'Apr 8, 2026',
+    trackCount: 3,
+    targets: [
+      {id:1,  name:"Reduce Scope 1 Emissions −30%",   track:"Scope 1", objective:"−30%",  owner:"Marie Laurent",  region:"Global",    actions:0, subTargets:8, depth:0, pid:null, kids:[2,10,11,12],  branches:["Global"],                         baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:2,  name:"Fleet Decarbonization",            track:"Scope 1", objective:"−35%",  owner:"Pierre Dubois",  region:"Europe",    actions:0, subTargets:4, depth:1, pid:1,    kids:[3,8,9],      branches:["West Europe","Transport"],         baselineYear:2021, targetYear:2029, functionArea:"Transport"},
+      {id:3,  name:"Fleet Electrification — France",   track:"Scope 1", objective:"−40%",  owner:"Pierre Dubois",  region:"France",    actions:0, subTargets:2, depth:2, pid:2,    kids:[4,7],        branches:["France","Transport"],              baselineYear:2021, targetYear:2029, functionArea:"Transport"},
+      {id:4,  name:"Paris Region Fleet",               track:"Scope 1", objective:"−45%",  owner:"Pierre Dubois",  region:"France",    actions:0, subTargets:2, depth:3, pid:3,    kids:[5,6],        branches:["Paris","Transport"],               baselineYear:2021, targetYear:2029, functionArea:"Transport"},
+      {id:5,  name:"Paris — Light Vehicles",           track:"Scope 1", objective:"−50%",  owner:"Pierre Dubois",  region:"France",    actions:3, subTargets:0, depth:4, pid:4,    kids:[],           branches:["Paris","Transport"],               baselineYear:2022, targetYear:2029, functionArea:"Transport"},
+      {id:6,  name:"Paris — Heavy Trucks",             track:"Scope 1", objective:"−40%",  owner:"Pierre Dubois",  region:"France",    actions:2, subTargets:0, depth:4, pid:4,    kids:[],           branches:["Paris","Transport"],               baselineYear:2022, targetYear:2029, functionArea:"Transport"},
+      {id:7,  name:"Lyon Region Fleet",                track:"Scope 1", objective:"−35%",  owner:"Pierre Dubois",  region:"France",    actions:4, subTargets:0, depth:3, pid:3,    kids:[],           branches:["Lyon","Transport"],                baselineYear:2021, targetYear:2029, functionArea:"Transport"},
+      {id:8,  name:"Fleet Electrification — Germany",  track:"Scope 1", objective:"−25%",  owner:"Hans Weber",     region:"Germany",   actions:1, subTargets:0, depth:2, pid:2,    kids:[],           branches:["Germany","Transport"],             baselineYear:2021, targetYear:2029, functionArea:"Transport"},
+      {id:9,  name:"Fleet Fuel Switching — US",        track:"Scope 1", objective:"−20%",  owner:"James Miller",   region:"Americas",  actions:0, subTargets:0, depth:2, pid:2,    kids:[],           branches:["Americas","Transport"],            baselineYear:2021, targetYear:2030, functionArea:"Transport"},
+      {id:10, name:"Buildings Energy — France",        track:"Scope 1", objective:"−40%",  owner:"Pierre Dubois",  region:"France",    actions:2, subTargets:0, depth:1, pid:1,    kids:[],           branches:["France","Operations"],             baselineYear:2021, targetYear:2029, functionArea:"Operations"},
+      {id:11, name:"Buildings Energy — Germany",       track:"Scope 1", objective:"−35%",  owner:"Hans Weber",     region:"Germany",   actions:0, subTargets:0, depth:1, pid:1,    kids:[],           branches:["Germany","Operations"],            baselineYear:2021, targetYear:2029, functionArea:"Operations"},
+      {id:12, name:"Manufacturing Process",            track:"Scope 1", objective:"−15%",  owner:"Yuki Tanaka",    region:"APAC",      actions:1, subTargets:0, depth:1, pid:1,    kids:[],           branches:["APAC","Factory"],                  baselineYear:2021, targetYear:2029, functionArea:"Factory"},
+      {id:13, name:"Reduce Scope 2 Emissions −50%",    track:"Scope 2", objective:"−50%",  owner:"Marie Laurent",  region:"Global",    actions:0, subTargets:3, depth:0, pid:null, kids:[14,15,16],   branches:["Global"],                          baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:14, name:"Renewable Energy Procurement",     track:"Scope 2", objective:"−60%",  owner:"Sophie Martin",  region:"Europe",    actions:4, subTargets:0, depth:1, pid:13,   kids:[],           branches:["Europe","Operations"],             baselineYear:2021, targetYear:2029, functionArea:"Operations"},
+      {id:15, name:"On-site Solar — Tokyo Plant",      track:"Scope 2", objective:"−20%",  owner:"Yuki Tanaka",    region:"APAC",      actions:2, subTargets:0, depth:1, pid:13,   kids:[],           branches:["APAC","Factory"],                  baselineYear:2021, targetYear:2029, functionArea:"Factory"},
+      {id:16, name:"Grid Decarbonization — US",        track:"Scope 2", objective:"−30%",  owner:"James Miller",   region:"Americas",  actions:1, subTargets:0, depth:1, pid:13,   kids:[],           branches:["Americas","Operations"],           baselineYear:2021, targetYear:2029, functionArea:"Operations"},
+      {id:17, name:"Reduce Scope 3 Emissions −40%",    track:"Scope 3", objective:"−40%",  owner:"Marie Laurent",  region:"Global",    actions:0, subTargets:9, depth:0, pid:null, kids:[18,24,25,26,27], branches:["Global"],                      baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:18, name:"Supplier Engagement Program",      track:"Scope 3", objective:"−25%",  owner:"Lisa Chen",      region:"Global",    actions:0, subTargets:4, depth:1, pid:17,   kids:[19,22,23],   branches:["Global","Supply Chain"],           baselineYear:2021, targetYear:2029, functionArea:"Supply Chain"},
+      {id:19, name:"Tier 1 Suppliers — Packaging",     track:"Scope 3", objective:"−30%",  owner:"Lisa Chen",      region:"Europe",    actions:0, subTargets:2, depth:2, pid:18,   kids:[20,21],      branches:["Europe","Packaging"],              baselineYear:2021, targetYear:2029, functionArea:"Packaging"},
+      {id:20, name:"Packaging — Plastics",             track:"Scope 3", objective:"−35%",  owner:"Lisa Chen",      region:"Europe",    actions:2, subTargets:0, depth:3, pid:19,   kids:[],           branches:["Europe","Packaging"],              baselineYear:2022, targetYear:2029, functionArea:"Packaging"},
+      {id:21, name:"Packaging — Cardboard",            track:"Scope 3", objective:"−25%",  owner:"Lisa Chen",      region:"Europe",    actions:1, subTargets:0, depth:3, pid:19,   kids:[],           branches:["Europe","Packaging"],              baselineYear:2022, targetYear:2029, functionArea:"Packaging"},
+      {id:22, name:"Tier 1 Suppliers — Raw Materials", track:"Scope 3", objective:"−20%",  owner:"Lisa Chen",      region:"Global",    actions:0, subTargets:0, depth:2, pid:18,   kids:[],           branches:["Global","Supply Chain"],           baselineYear:2021, targetYear:2029, functionArea:"Supply Chain"},
+      {id:23, name:"Tier 2 Suppliers — Logistics",     track:"Scope 3", objective:"−15%",  owner:"Lisa Chen",      region:"Global",    actions:1, subTargets:0, depth:2, pid:18,   kids:[],           branches:["Global","Supply Chain"],           baselineYear:2021, targetYear:2029, functionArea:"Supply Chain"},
+      {id:24, name:"Business Travel Reduction",        track:"Scope 3", objective:"−50%",  owner:"Sophie Martin",  region:"Global",    actions:3, subTargets:0, depth:1, pid:17,   kids:[],           branches:["Global","Corporate"],              baselineYear:2021, targetYear:2029, functionArea:"Corporate"},
+      {id:25, name:"Employee Commuting",               track:"Scope 3", objective:"−30%",  owner:"Pierre Dubois",  region:"France",    actions:1, subTargets:0, depth:1, pid:17,   kids:[],           branches:["France","Corporate"],              baselineYear:2021, targetYear:2029, functionArea:"Corporate"},
+      {id:26, name:"Logistics Optimization",           track:"Scope 3", objective:"−35%",  owner:"Hans Weber",     region:"Europe",    actions:0, subTargets:0, depth:1, pid:17,   kids:[],           branches:["Europe","Supply Chain"],           baselineYear:2021, targetYear:2029, functionArea:"Supply Chain"},
+      {id:27, name:"Digital Services Footprint",       track:"Scope 3", objective:"−20%",  owner:"James Miller",   region:"Americas",  actions:0, subTargets:0, depth:1, pid:17,   kids:[],           branches:["Americas","IT"],                   baselineYear:2021, targetYear:2029, functionArea:"IT"},
+      {id:28, name:"Reduce Water Consumption −20%",    track:"Water",   objective:"−20%",  owner:"Yuki Tanaka",    region:"APAC",      actions:0, subTargets:2, depth:0, pid:null, kids:[29,30],      branches:["APAC"],                            baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+      {id:29, name:"Cooling System Retrofit — Tokyo",  track:"Water",   objective:"−30%",  owner:"Yuki Tanaka",    region:"APAC",      actions:2, subTargets:0, depth:1, pid:28,   kids:[],           branches:["APAC","Factory"],                  baselineYear:2021, targetYear:2029, functionArea:"Factory"},
+      {id:30, name:"Water Recycling — Lyon Plant",     track:"Water",   objective:"−15%",  owner:"Pierre Dubois",  region:"France",    actions:1, subTargets:0, depth:1, pid:28,   kids:[],           branches:["France","Factory"],                baselineYear:2021, targetYear:2029, functionArea:"Factory"},
+    ]
+  },
+  fy2027: {
+    name: 'FY2027 Ambitious Plan',
+    date: 'Mar 22, 2026',
+    trackCount: 5,
+    targets: [
+      {id:101, name:"Net Zero Scope 1",           track:"Scope 1", objective:"−100%", owner:"Marie Laurent",  region:"Global",    actions:2, subTargets:0, depth:0, pid:null, kids:[], branches:["Global"],                       baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:102, name:"Net Zero Scope 2",           track:"Scope 2", objective:"−100%", owner:"Marie Laurent",  region:"Global",    actions:3, subTargets:0, depth:0, pid:null, kids:[], branches:["Global"],                       baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:103, name:"Scope 3 Halving",            track:"Scope 3", objective:"−50%",  owner:"Lisa Chen",      region:"Global",    actions:1, subTargets:0, depth:0, pid:null, kids:[], branches:["Global","Supply Chain"],        baselineYear:2021, targetYear:2030, functionArea:"Supply Chain"},
+      {id:104, name:"Full Renewable Energy",      track:"Scope 2", objective:"−100%", owner:"Sophie Martin",  region:"Europe",    actions:4, subTargets:0, depth:0, pid:null, kids:[], branches:["Europe","Operations"],          baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+      {id:105, name:"Zero Business Travel",       track:"Scope 3", objective:"−100%", owner:"Sophie Martin",  region:"Global",    actions:0, subTargets:0, depth:0, pid:null, kids:[], branches:["Global","Corporate"],           baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:106, name:"Water Neutral Operations",   track:"Water",   objective:"−100%", owner:"Yuki Tanaka",    region:"APAC",      actions:0, subTargets:0, depth:0, pid:null, kids:[], branches:["APAC","Operations"],            baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+      {id:107, name:"Circular Packaging",         track:"Waste",   objective:"−100%", owner:"Hans Weber",     region:"Europe",    actions:2, subTargets:0, depth:0, pid:null, kids:[], branches:["Europe","Packaging"],           baselineYear:2021, targetYear:2030, functionArea:"Packaging"},
+      {id:108, name:"Carbon Removal Investment",  track:"Scope 1", objective:"−20%",  owner:"James Miller",   region:"Americas",  actions:0, subTargets:0, depth:0, pid:null, kids:[], branches:["Americas","Corporate"],         baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+    ]
+  },
+  conservative: {
+    name: 'Conservative Baseline',
+    date: 'Jan 15, 2026',
+    trackCount: 5,
+    targets: [
+      {id:201, name:"Scope 1 Compliance", track:"Scope 1", objective:"−10%", owner:"Marie Laurent",  region:"Global",   actions:5, subTargets:0, depth:0, pid:null, kids:[], branches:["Global"],                    baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:202, name:"Scope 2 Efficiency", track:"Scope 2", objective:"−15%", owner:"Sophie Martin",  region:"Europe",   actions:3, subTargets:0, depth:0, pid:null, kids:[], branches:["Europe","Operations"],       baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+      {id:203, name:"Supplier Basics",    track:"Scope 3", objective:"−5%",  owner:"Lisa Chen",      region:"Global",   actions:2, subTargets:0, depth:0, pid:null, kids:[], branches:["Global","Supply Chain"],     baselineYear:2021, targetYear:2030, functionArea:"Supply Chain"},
+      {id:204, name:"Water Monitoring",   track:"Water",   objective:"−5%",  owner:"Yuki Tanaka",    region:"APAC",     actions:1, subTargets:0, depth:0, pid:null, kids:[], branches:["APAC","Operations"],         baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+      {id:205, name:"Waste Reporting",    track:"Waste",   objective:"−10%", owner:"Hans Weber",     region:"Germany",  actions:1, subTargets:0, depth:0, pid:null, kids:[], branches:["Germany","Operations"],      baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+    ]
+  }
+};
+const SCENARIO_ORDER = ['fy2026','fy2027','conservative'];
+
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+let activeScenarioId = 'fy2026';
+let DATA = [];
+let TM = {};              // target map by id
+let currentTargetId = null; // null = scenario root page; otherwise = current target
+
+function loadScenario(id){
+  activeScenarioId = id;
+  DATA = SCENARIOS[id].targets;
+  TM = {};
+  DATA.forEach(t=>TM[t.id]=t);
+}
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function ancestors(id){
+  const chain=[];let t=TM[id];
+  while(t&&t.pid!=null){chain.unshift(t.pid);t=TM[t.pid];}
+  return chain;
+}
+
+function trackClass(track){
+  const t=(track||'').toLowerCase().replace(/\s+/g,'');
+  if(t==='scope1')return'track-scope1';
+  if(t==='scope2')return'track-scope2';
+  if(t==='scope3')return'track-scope3';
+  if(t==='water')return'track-water';
+  if(t==='waste')return'track-waste';
+  return'track-waste';
+}
+
+function sumActions(id){
+  const t=TM[id];if(!t)return 0;
+  if(!t.kids||t.kids.length===0)return t.actions;
+  return t.kids.reduce((s,k)=>s+sumActions(k),0);
+}
+
+function countSubTargets(id){
+  const t=TM[id];if(!t)return 0;
+  if(!t.kids||t.kids.length===0)return 0;
+  let n=t.kids.length;
+  t.kids.forEach(k=>{n+=countSubTargets(k);});
+  return n;
+}
+
+// ─────────────────────────────────────────────
+//  RENDER
+// ─────────────────────────────────────────────
+function render(){
+  renderBreadcrumb();
+  renderHeader();
+  renderSettings();
+  renderSection();
+  renderMainList();
+}
+
+function renderBreadcrumb(){
+  const bc=document.getElementById('breadcrumb');
+  const sc=SCENARIOS[activeScenarioId];
+  if(currentTargetId==null){
+    // On scenario root: breadcrumb is empty (scenario name is in h1)
+    bc.innerHTML='';
+    return;
+  }
+  let html=`<span class="bc-link" onclick="goToScenario()">${esc(sc.name)}</span>`;
+  ancestors(currentTargetId).forEach(aid=>{
+    const at=TM[aid];
+    html+=`<span class="bc-sep">/</span><span class="bc-link" onclick="goToTarget(${aid})">${esc(at.name)}</span>`;
+  });
+  const t=TM[currentTargetId];
+  html+=`<span class="bc-sep">/</span><span class="bc-current">${esc(t.name)}</span>`;
+  bc.innerHTML=html;
+}
+
+function renderHeader(){
+  const titleEl=document.getElementById('header-title');
+  const actionsEl=document.getElementById('header-actions');
+  const sc=SCENARIOS[activeScenarioId];
+
+  if(currentTargetId==null){
+    // Scenario root page
+    const nT=DATA.length,nTr=sc.trackCount||0;
+    titleEl.innerHTML=`
+      <div class="sc-trigger-wrap" id="sc-trigger-wrap">
+        <div class="sc-trigger" onclick="toggleScenarioPop()">
+          <h1>${esc(sc.name)}</h1>
+          <span class="sc-chev">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>
+          </span>
+        </div>
+        <p class="subtitle">${nT} target${nT!==1?'s':''} · ${nTr} track${nTr!==1?'s':''} · Last edited ${sc.date}</p>
+        <div class="sc-pop" id="sc-pop">
+          <span class="sc-pop-label">Scenarios</span>
+          <div id="sc-pop-list"></div>
+        </div>
+      </div>
+    `;
+    actionsEl.innerHTML=`
+      <button class="btn btn-primary" onclick="onAddTarget()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+        Add target
+      </button>
+    `;
+  } else {
+    // Target page
+    const t=TM[currentTargetId];
+    const hasKids=t.kids&&t.kids.length>0;
+    titleEl.innerHTML=`
+      <div class="tg-trigger-wrap" id="tg-trigger-wrap">
+        <div class="tg-trigger" onclick="toggleTargetPop()">
+          <h1>${esc(t.name)}</h1>
+          <span class="sc-chev">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>
+          </span>
+        </div>
+        <p class="subtitle">Reduce emissions in line with SBTi-approved science-based pathways.</p>
+        <div class="sc-pop" id="tg-pop">
+          <span class="sc-pop-label">Targets at this level</span>
+          <div id="tg-pop-list"></div>
+        </div>
+      </div>
+    `;
+    actionsEl.innerHTML=`
+      <button class="btn btn-primary" onclick="onAddChild()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+        ${hasKids?'Add sub-target':'Add action'}
+      </button>
+      <button class="btn btn-icon" title="More">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="3" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="13" cy="8" r="1.2" fill="currentColor"/></svg>
+      </button>
+    `;
+  }
+}
+
+function renderSettings(){
+  const slot=document.getElementById('settings-slot');
+  if(currentTargetId==null){slot.innerHTML='';return;}
+  const t=TM[currentTargetId];
+  const brArr=t.branches||[];
+  const brHtml=brArr.length
+    ?brArr.map(b=>`<span class="bpill">${esc(b)}</span>`).join('')
+    :'<span class="sc-val" style="color:var(--text-40);">—</span>';
+  slot.innerHTML=`
+    <div class="settings-card">
+      <div class="sc-col">
+        <span class="sc-label">Track</span>
+        <span class="sc-val">${esc(t.track)} (tCO2e)</span>
+      </div>
+      <div class="sc-col">
+        <span class="sc-label">Forecast</span>
+        <span class="sc-val">🚀 Emissions forecast (tCO2e)</span>
+      </div>
+      <div class="sc-col sc-col-branches">
+        <span class="sc-label">Branches</span>
+        <span class="sc-val sc-val-branches">${brHtml}</span>
+      </div>
+      <div class="sc-col">
+        <span class="sc-label">Objective</span>
+        <span class="sc-val">Percentage ${esc(t.objective)}</span>
+      </div>
+      <div class="sc-col">
+        <span class="sc-label">Documentation</span>
+        <span class="sc-val">0 files</span>
+      </div>
+      <button class="sc-edit-btn" onclick="onEditTarget()" title="Edit settings">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 2.5l2 2L5 13l-3 1 1-3 8.5-8.5z"/></svg>
+        Edit
+      </button>
+    </div>
+  `;
+}
+
+function renderSection(){
+  const st=document.getElementById('section-title');
+  if(currentTargetId==null){
+    st.classList.add('hidden');return;
+  }
+  const t=TM[currentTargetId];
+  const hasKids=t.kids&&t.kids.length>0;
+  st.classList.remove('hidden');
+  if(hasKids){
+    const n=t.kids.length;
+    st.innerHTML=`<span>Sub-targets</span><span class="count">${n} direct · ${sumActions(t.id)} action${sumActions(t.id)!==1?'s':''} total</span>`;
+  } else {
+    const n=t.actions;
+    st.innerHTML=`<span>Actions</span><span class="count">${n} action${n!==1?'s':''}</span>`;
+  }
+}
+
+function renderMainList(){
+  const mount=document.getElementById('main-list');
+  if(currentTargetId==null){
+    // Scenario root: show root-level targets (depth 0)
+    const rootTargets=DATA.filter(t=>t.pid===null||t.pid===undefined);
+    mount.innerHTML=renderTargetRows(rootTargets);
+    return;
+  }
+  const t=TM[currentTargetId];
+  const hasKids=t.kids&&t.kids.length>0;
+  if(hasKids){
+    const kids=t.kids.map(k=>TM[k]).filter(Boolean);
+    mount.innerHTML=renderTargetRows(kids);
+  } else {
+    // Leaf: show actions
+    if(t.actions===0){
+      mount.innerHTML=`<div class="empty-state"><div class="emoji">📋</div><div class="msg">No actions yet for this target.</div><button class="btn btn-primary" onclick="onAddChild()">+ Add your first action</button></div>`;
+    } else {
+      const items=Array.from({length:t.actions},(_,i)=>`<li>Action ${i+1} — ${esc(t.name)}</li>`).join('');
+      mount.innerHTML=`<ul class="action-list">${items}</ul>`;
+    }
+  }
+}
+
+function renderTargetRows(list){
+  if(list.length===0){
+    return `<div class="empty-state"><div class="emoji">🎯</div><div class="msg">No targets yet.</div><button class="btn btn-primary" onclick="onAddChild()">+ Add target</button></div>`;
+  }
+  const header=`
+    <div class="tlist-header">
+      <span>Name</span>
+      <span class="th-r"># Sub-targets</span>
+      <span class="th-r"># Actions</span>
+      <span>Branches</span>
+      <span>Baseline year</span>
+      <span>Target year</span>
+      <span>Region</span>
+      <span>Function</span>
+      <span></span>
+    </div>
+  `;
+  const rows=list.map(t=>{
+    const hasKids=t.kids&&t.kids.length>0;
+    // Actions: leaf shows own count; parent shows recursive sum of all leaf descendants
+    const dispAct=hasKids?sumActions(t.id):t.actions;
+    const actCls=hasKids
+      ? (dispAct===0?'num-0':'num-agg')
+      : (t.actions===0?'num-0':'');
+    // Sub-targets: direct children count (what the user would reveal on next drill-in)
+    const dispSub=hasKids?t.kids.length:0;
+    const subCls=hasKids?'':'num-agg';
+    const subDisp=hasKids?dispSub:'—';
+    // Sub-label under name: just the track
+    const subMeta=esc(t.track);
+    const brHtml=(t.branches||[]).map(b=>`<span class="bpill">${esc(b)}</span>`).join('')
+      || '<span class="trow-cell-sec">—</span>';
+    return `
+      <div class="trow" onclick="goToTarget(${t.id})">
+        <div class="trow-name">
+          <span class="n-name">${esc(t.name)}</span>
+          <span class="n-sub">${subMeta}</span>
+        </div>
+        <span class="trow-num ${subCls}">${subDisp}</span>
+        <span class="trow-num ${actCls}">${dispAct}</span>
+        <div class="trow-branches">${brHtml}</div>
+        <span class="trow-cell-sec">${t.baselineYear??'—'}</span>
+        <span class="trow-cell-sec">${t.targetYear??'—'}</span>
+        <span class="trow-cell-sec">${esc(t.region)}</span>
+        <span class="trow-cell-sec">${esc(t.functionArea||'—')}</span>
+        <span class="chev-r">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l4 4-4 4"/></svg>
+        </span>
+      </div>
+    `;
+  }).join('');
+  return `<div class="tlist">${header}${rows}</div>`;
+}
+
+// ─────────────────────────────────────────────
+//  HASH ROUTING (Maze-friendly URLs)
+//  #/sc/{scenarioId}              → scenario root page
+//  #/sc/{scenarioId}/t/{targetId} → target detail page
+// ─────────────────────────────────────────────
+let _suppressHashApply=false;
+function getHashState(){
+  const h=window.location.hash.slice(1);
+  const m=h.match(/^\/sc\/([^\/]+)(?:\/t\/(\d+))?/);
+  if(!m)return{scenarioId:null,targetId:null};
+  return{scenarioId:m[1]||null,targetId:m[2]?parseInt(m[2],10):null};
+}
+function updateHash(scenarioId,targetId){
+  const newHash=targetId!=null
+    ?`#/sc/${scenarioId}/t/${targetId}`
+    :`#/sc/${scenarioId}`;
+  if(window.location.hash!==newHash){
+    _suppressHashApply=true;
+    try{
+      history.pushState(null,'',newHash);
+    }catch(e){
+      // file:// origins block pushState; fall back to direct hash assignment
+      window.location.hash=newHash;
+    }
+    setTimeout(()=>{_suppressHashApply=false;},0);
+  }
+}
+function applyHashState(){
+  if(_suppressHashApply)return;
+  const{scenarioId,targetId}=getHashState();
+  const targetScenario=(scenarioId&&SCENARIOS[scenarioId])?scenarioId:SCENARIO_ORDER[0];
+  if(targetScenario!==activeScenarioId){loadScenario(targetScenario);}
+  currentTargetId=(targetId!=null&&TM[targetId])?targetId:null;
+  closePops();
+  window.scrollTo(0,0);
+  render();
+}
+window.addEventListener('popstate',applyHashState);
+window.addEventListener('hashchange',applyHashState);
+
+// ─────────────────────────────────────────────
+//  NAVIGATION
+// ─────────────────────────────────────────────
+function goToScenario(){
+  currentTargetId=null;
+  closePops();
+  window.scrollTo(0,0);
+  updateHash(activeScenarioId,null);
+  render();
+}
+function goToTarget(id){
+  if(!TM[id])return;
+  currentTargetId=id;
+  closePops();
+  window.scrollTo(0,0);
+  updateHash(activeScenarioId,id);
+  render();
+}
+
+// ─────────────────────────────────────────────
+//  SCENARIO SWITCHER
+// ─────────────────────────────────────────────
+function toggleScenarioPop(){
+  const pop=document.getElementById('sc-pop');
+  if(!pop)return;
+  const wasOpen=pop.classList.contains('open');
+  closePops();
+  if(!wasOpen){renderScenarioPop();pop.classList.add('open');}
+}
+function renderScenarioPop(){
+  const list=document.getElementById('sc-pop-list');
+  if(!list)return;
+  list.innerHTML='';
+  SCENARIO_ORDER.forEach(sid=>{
+    const sc=SCENARIOS[sid];
+    const isActive=sid===activeScenarioId;
+    const item=document.createElement('div');
+    item.className='sc-item';
+    item.onclick=()=>switchScenario(sid);
+    item.innerHTML=`
+      <div class="sc-item-left">
+        <span class="sc-check">${isActive?'✓':''}</span>
+        <span class="sc-item-name${isActive?' active':''}">${esc(sc.name)}</span>
+      </div>
+      <span class="sc-item-meta">${sc.targets.length} targets</span>
+    `;
+    list.appendChild(item);
+  });
+}
+function switchScenario(id){
+  if(id===activeScenarioId){closePops();return;}
+  loadScenario(id);
+  currentTargetId=null;
+  closePops();
+  updateHash(id,null);
+  render();
+}
+
+// ─────────────────────────────────────────────
+//  TARGET SWITCHER (siblings at the same level)
+// ─────────────────────────────────────────────
+function getSiblings(id){
+  const t=TM[id];if(!t)return[];
+  if(t.pid===null||t.pid===undefined){
+    return DATA.filter(x=>x.pid===null||x.pid===undefined);
+  }
+  const parent=TM[t.pid];
+  if(!parent||!parent.kids)return[t];
+  return parent.kids.map(k=>TM[k]).filter(Boolean);
+}
+function toggleTargetPop(){
+  const pop=document.getElementById('tg-pop');
+  if(!pop)return;
+  const wasOpen=pop.classList.contains('open');
+  closePops();
+  if(!wasOpen){renderTargetPop();pop.classList.add('open');}
+}
+function renderTargetPop(){
+  const list=document.getElementById('tg-pop-list');
+  if(!list||currentTargetId==null)return;
+  list.innerHTML='';
+  const siblings=getSiblings(currentTargetId);
+  siblings.forEach(s=>{
+    const isActive=s.id===currentTargetId;
+    const kidCount=s.kids?s.kids.length:0;
+    const meta=kidCount>0
+      ?`${kidCount} sub-target${kidCount!==1?'s':''}`
+      :(s.actions>0?`${s.actions} action${s.actions!==1?'s':''}`:'—');
+    const item=document.createElement('div');
+    item.className='sc-item';
+    item.onclick=()=>{goToTarget(s.id);};
+    item.innerHTML=`
+      <div class="sc-item-left">
+        <span class="sc-check">${isActive?'✓':''}</span>
+        <span class="sc-item-name${isActive?' active':''}">${esc(s.name)}</span>
+      </div>
+      <span class="sc-item-meta">${meta}</span>
+    `;
+    list.appendChild(item);
+  });
+}
+
+// ─────────────────────────────────────────────
+//  POPOVERS
+// ─────────────────────────────────────────────
+function closePops(){
+  const sp=document.getElementById('sc-pop');if(sp)sp.classList.remove('open');
+  const tp=document.getElementById('tg-pop');if(tp)tp.classList.remove('open');
+}
+document.addEventListener('click',function(e){
+  const scWrap=document.getElementById('sc-trigger-wrap');
+  if(scWrap&&!scWrap.contains(e.target)){
+    const sp=document.getElementById('sc-pop');if(sp)sp.classList.remove('open');
+  }
+  const tgWrap=document.getElementById('tg-trigger-wrap');
+  if(tgWrap&&!tgWrap.contains(e.target)){
+    const tp=document.getElementById('tg-pop');if(tp)tp.classList.remove('open');
+  }
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePops();});
+
+// ─────────────────────────────────────────────
+//  STUBS
+// ─────────────────────────────────────────────
+function onAddTarget(){alert('Add target (stub)');}
+function onAddChild(){
+  if(currentTargetId==null)return onAddTarget();
+  const t=TM[currentTargetId];
+  const hasKids=t.kids&&t.kids.length>0;
+  alert((hasKids?'Add sub-target':'Add action')+' (stub)');
+}
+function onEditTarget(){alert('Edit target settings (stub)');}
+
+// ─────────────────────────────────────────────
+//  INIT (respects hash on load)
+// ─────────────────────────────────────────────
+(function init(){
+  const{scenarioId,targetId}=getHashState();
+  const startScenario=(scenarioId&&SCENARIOS[scenarioId])?scenarioId:'fy2026';
+  loadScenario(startScenario);
+  currentTargetId=(targetId!=null&&TM[targetId])?targetId:null;
+  // Ensure hash is canonical (e.g. bare URL → #/sc/fy2026)
+  if(!window.location.hash){
+    const initHash=`#/sc/${startScenario}${currentTargetId!=null?`/t/${currentTargetId}`:''}`;
+    try{
+      history.replaceState(null,'',initHash);
+    }catch(e){
+      window.location.hash=initHash;
+    }
+  }
+  render();
+})();
+</script>
+</body>
+</html>
