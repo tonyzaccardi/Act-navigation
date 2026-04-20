@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Maze universal snippet -->
+<script>
+(function (m, a, z, e) {
+  var s, t, u, v;
+  try {
+    t = m.sessionStorage.getItem('maze-us');
+  } catch (err) {}
+  if (!t) {
+    t = new Date().getTime();
+    try {
+      m.sessionStorage.setItem('maze-us', t);
+    } catch (err) {}
+  }
+  u = document.currentScript || (function () {
+    var w = document.getElementsByTagName('script');
+    return w[w.length - 1];
+  })();
+  v = u && u.nonce;
+  s = a.createElement('script');
+  s.src = z + '?apiKey=' + e;
+  s.async = true;
+  if (v) s.setAttribute('nonce', v);
+  a.getElementsByTagName('head')[0].appendChild(s);
+  m.mazeUniversalSnippetApiKey = e;
+})(window, document, 'https://snippet.maze.co/maze-universal-loader.js', '001f4ab7-3728-4f99-9ac2-495ebc6b9e5a');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Act — Drill-down prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Cursor Design System Tokens ── */
+:root {
+  --bg:         #f2f1ed;
+  --bg-light:   #f7f7f4;
+  --surf-100:   #f7f7f4;
+  --surf-200:   #f2f1ed;
+  --surf-300:   #ebeae5;
+  --surf-400:   #e6e5e0;
+  --surf-500:   #e1e0db;
+  --text:       #26251e;
+  --text-55:    rgba(38,37,30,0.55);
+  --text-40:    rgba(38,37,30,0.40);
+  --text-25:    rgba(38,37,30,0.25);
+  --orange:     #f54e00;
+  --crimson:    #cf2d56;
+  --gold:       #c08532;
+  --success:    #1f8a65;
+
+  --bdr-10:     rgba(38,37,30,0.10);
+  --bdr-20:     rgba(38,37,30,0.20);
+  --bdr-55:     rgba(38,37,30,0.55);
+  --bdr-row:    rgba(38,37,30,0.07);
+
+  --shadow-card:    rgba(0,0,0,0.14) 0px 28px 70px, rgba(0,0,0,0.10) 0px 14px 32px, rgba(38,37,30,0.10) 0px 0px 0px 1px;
+  --shadow-ambient: rgba(0,0,0,0.02) 0px 0px 16px, rgba(0,0,0,0.008) 0px 0px 8px;
+  --shadow-focus:   rgba(0,0,0,0.10) 0px 4px 12px;
+
+  --font-ui:    'Inter', system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-mono:  ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{
+  font-family:var(--font-ui);
+  background:var(--bg);
+  color:var(--text);
+  min-width:1280px;
+  font-size:16px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── Layout ── */
+.wrap{max-width:1200px;margin:0 auto;padding:0 36px;}
+
+/* ── Breadcrumb bar ── */
+.breadcrumb-bar{
+  position:sticky;top:0;z-index:120;
+  background:var(--bg);
+  border-bottom:1px solid var(--bdr-10);
+  height:44px;display:flex;align-items:center;
+}
+nav.bc{display:flex;align-items:center;gap:2px;flex-wrap:wrap;}
+.bc-link{
+  font-size:13px;font-weight:500;color:var(--text-55);
+  cursor:pointer;padding:2px 4px;border-radius:4px;
+  text-decoration:none;transition:color .15s;
+}
+.bc-link:hover{color:var(--text);}
+.bc-sep{font-size:13px;color:var(--text-25);padding:0 1px;}
+.bc-current{font-size:13px;font-weight:500;color:var(--text);padding:2px 4px;}
+
+/* ── Page header ── */
+.page-header{padding:28px 0 20px;display:flex;align-items:flex-start;justify-content:space-between;gap:24px;}
+.page-header h1{
+  font-size:28px;font-weight:600;line-height:1.2;
+  color:var(--text);letter-spacing:-.5px;
+}
+.page-header .subtitle{
+  margin-top:5px;font-size:13px;font-weight:400;
+  color:var(--text-55);letter-spacing:.01em;
+}
+
+/* ── Header right-side buttons ── */
+.header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;padding-top:6px;}
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--font-ui);font-size:13px;font-weight:500;
+  height:32px;padding:0 12px;border-radius:6px;
+  border:1px solid var(--bdr-10);background:var(--surf-100);
+  color:var(--text);cursor:pointer;transition:all .15s;
+}
+.btn:hover{background:var(--surf-300);border-color:var(--bdr-20);}
+.btn-primary{
+  background:var(--text);color:var(--bg);border-color:var(--text);
+}
+.btn-primary:hover{background:#000;border-color:#000;}
+.btn-icon{
+  width:32px;height:32px;padding:0;justify-content:center;
+}
+.btn svg{width:13px;height:13px;}
+
+/* ── Settings card (target pages) ── */
+.settings-card{
+  display:flex;align-items:center;gap:32px;
+  background:var(--surf-100);border:1px solid var(--bdr-10);
+  border-radius:10px;padding:16px 20px;
+  margin-bottom:28px;
+  box-shadow:var(--shadow-ambient);
+}
+.sc-col{
+  display:flex;flex-direction:column;gap:6px;
+  min-width:0;flex:1 1 auto;
+}
+.sc-col-branches{flex:1.4 1 auto;}
+.sc-label{
+  font-size:10px;font-weight:600;letter-spacing:.08em;
+  color:var(--text-40);text-transform:uppercase;
+}
+.sc-val{
+  font-size:13px;font-weight:500;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.sc-val-branches{
+  display:flex;gap:6px;flex-wrap:wrap;white-space:normal;
+}
+.bpill{
+  display:inline-flex;align-items:center;
+  font-size:11px;font-weight:500;
+  height:22px;padding:0 8px;border-radius:11px;
+  background:var(--surf-300);color:var(--text);
+  border:1px solid var(--bdr-10);
+}
+.sc-edit-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--font-ui);font-size:12px;font-weight:500;
+  height:28px;padding:0 10px;border-radius:6px;
+  border:1px solid var(--bdr-10);background:var(--bg);
+  color:var(--text-55);cursor:pointer;transition:all .15s;
+  flex-shrink:0;margin-left:8px;
+}
+.sc-edit-btn:hover{color:var(--text);border-color:var(--bdr-20);}
+.sc-edit-btn svg{width:11px;height:11px;}
+
+/* ── Section title ── */
+.section-title{
+  font-size:14px;font-weight:600;color:var(--text);
+  margin-bottom:12px;display:flex;align-items:center;
+  justify-content:space-between;gap:12px;
+}
+.section-title .count{color:var(--text-55);font-weight:500;}
+.section-block{margin-bottom:28px;}
+.section-block:last-child{margin-bottom:0;}
+.section-head{
+  font-size:14px;font-weight:600;color:var(--text);
+  margin-bottom:12px;display:flex;align-items:baseline;gap:10px;
+}
+.section-head .count{color:var(--text-55);font-weight:500;font-size:13px;}
+.section-head .add-link{
+  margin-left:auto;font-size:12px;font-weight:500;color:var(--text-55);
+  background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;
+  transition:all .12s;
+}
+.section-head .add-link:hover{color:var(--text);background:var(--surf-300);}
+
+/* ── Target list (drill-down rows) ── */
+/* Columns match nested-table + # Sub-targets: Name / # Sub-targets / # Actions / Branches / Baseline / Target / Region / Function / chevron */
+.tlist{
+  background:var(--surf-100);border:1px solid var(--bdr-10);
+  border-radius:10px;
+  overflow-x:auto;overflow-y:hidden;
+  box-shadow:var(--shadow-ambient);
+}
+.tlist-header{
+  display:grid;
+  grid-template-columns: minmax(340px, max-content) 95px 90px 180px 110px 110px 110px 120px 28px;
+  align-items:center;gap:16px;
+  padding:10px 18px;
+  min-width:max-content;
+  border-bottom:1px solid var(--bdr-10);
+  background:var(--surf-200);
+  font-size:11px;font-weight:600;letter-spacing:.06em;
+  color:var(--text-40);text-transform:uppercase;
+}
+.tlist-header .th-r{text-align:right;}
+.trow{
+  display:grid;
+  grid-template-columns: minmax(340px, max-content) 95px 90px 180px 110px 110px 110px 120px 28px;
+  align-items:center;gap:16px;
+  padding:14px 18px;
+  min-width:max-content;
+  border-bottom:1px solid var(--bdr-row);
+  cursor:pointer;transition:background .12s;
+}
+.trow:last-child{border-bottom:none;}
+.trow:hover{background:var(--surf-300);}
+.trow-name{
+  display:flex;flex-direction:column;gap:3px;min-width:0;
+}
+.trow-name .n-name{
+  font-size:14px;font-weight:600;color:var(--text);
+  white-space:nowrap;
+}
+.trow-name .n-sub{
+  font-size:12px;color:var(--text-55);
+  white-space:nowrap;
+}
+.trow-cell{font-size:13px;color:var(--text);}
+.trow-cell-sec{font-size:13px;color:var(--text-55);}
+.trow-num{font-size:13px;color:var(--text);text-align:right;font-variant-numeric:tabular-nums;}
+.trow-num.num-0{color:var(--crimson);font-weight:600;}
+.trow-num.num-agg{color:var(--text-55);}
+.trow .chev-r{color:var(--text-40);justify-self:end;transition:color .15s;}
+.trow:hover .chev-r{color:var(--text);}
+.trow-branches{display:flex;gap:4px;flex-wrap:wrap;overflow:hidden;max-height:26px;}
+.trow-branches .bpill{height:20px;font-size:10.5px;padding:0 7px;}
+
+/* ── Scenarios list (scenarios page) ── */
+/* Columns: Name / # Targets / # Tracks / Last edited / chevron */
+.slist-header,.srow{
+  display:grid;
+  grid-template-columns: minmax(320px, max-content) 110px 110px 160px 28px;
+  align-items:center;gap:16px;
+  padding:14px 18px;
+  min-width:max-content;
+}
+.slist-header{
+  padding:10px 18px;
+  border-bottom:1px solid var(--bdr-10);
+  background:var(--surf-200);
+  font-size:11px;font-weight:600;letter-spacing:.06em;
+  color:var(--text-40);text-transform:uppercase;
+}
+.slist-header .th-r{text-align:right;}
+.srow{
+  border-bottom:1px solid var(--bdr-row);
+  cursor:pointer;transition:background .12s;
+}
+.srow:last-child{border-bottom:none;}
+.srow:hover{background:var(--surf-300);}
+.srow .s-name{
+  font-size:14px;font-weight:600;color:var(--text);
+  white-space:nowrap;
+}
+.srow .chev-r{color:var(--text-40);justify-self:end;transition:color .15s;}
+.srow:hover .chev-r{color:var(--text);}
+
+/* ── Actions list (leaf page) ── */
+.action-list{
+  background:var(--surf-100);border:1px solid var(--bdr-10);
+  border-radius:10px;overflow:hidden;list-style:none;
+  box-shadow:var(--shadow-ambient);
+}
+.action-list li{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 18px;font-size:13px;color:var(--text);
+  border-bottom:1px solid var(--bdr-row);
+}
+.action-list li:last-child{border-bottom:none;}
+.action-list li::before{
+  content:'';width:6px;height:6px;border-radius:50%;
+  background:var(--orange);flex-shrink:0;
+}
+.no-actions{
+  background:var(--surf-100);border:1px dashed var(--bdr-20);
+  border-radius:10px;padding:36px 18px;text-align:center;
+  font-size:13px;color:var(--text-55);
+}
+
+/* ── Empty state ── */
+.empty-state{
+  background:var(--surf-100);border:1px dashed var(--bdr-20);
+  border-radius:10px;padding:56px 18px;text-align:center;
+}
+.empty-state .emoji{font-size:24px;margin-bottom:10px;}
+.empty-state .msg{font-size:14px;color:var(--text-55);margin-bottom:12px;}
+/* Compact empty state inside a section-block (target detail sub-sections) */
+.section-block .empty-state{padding:28px 18px;}
+.section-block .empty-state .emoji{font-size:20px;margin-bottom:6px;}
+.section-block .empty-state .msg{font-size:13px;margin-bottom:10px;}
+
+.hidden{display:none!important;}
+
+/* ── Toolbar (search + filters above each table) ── */
+.toolbar{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.tb-search{
+  position:relative;flex:1 1 240px;max-width:340px;min-width:220px;
+}
+.tb-search input{
+  width:100%;font-family:var(--font-ui);font-size:13px;
+  height:34px;padding:0 12px 0 34px;border-radius:7px;
+  border:1px solid var(--bdr-10);background:var(--surf-100);
+  color:var(--text);outline:none;transition:all .15s;
+}
+.tb-search input::placeholder{color:var(--text-40);}
+.tb-search input:hover{border-color:var(--bdr-20);}
+.tb-search input:focus{border-color:var(--bdr-55);background:var(--bg-light);}
+.tb-search svg{
+  position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  width:14px;height:14px;color:var(--text-40);pointer-events:none;
+}
+.tb-filter-wrap{position:relative;display:inline-block;}
+.tb-filterbtn{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font-ui);font-size:13px;font-weight:500;
+  height:34px;padding:0 12px;border-radius:7px;
+  border:1px solid var(--bdr-10);background:var(--surf-100);
+  color:var(--text);cursor:pointer;outline:none;transition:all .15s;
+}
+.tb-filterbtn:hover{border-color:var(--bdr-20);}
+.tb-filterbtn.active{
+  border-color:var(--text-55);background:var(--surf-300);
+  font-weight:600;
+}
+.tb-filterbtn svg{width:13px;height:13px;color:var(--text-55);}
+.tb-filterbtn .tb-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:18px;height:18px;padding:0 5px;border-radius:9px;
+  background:var(--text);color:var(--bg);
+  font-size:11px;font-weight:600;line-height:1;
+}
+.filter-pop{
+  position:absolute;top:calc(100% + 6px);left:0;z-index:300;
+  width:260px;max-height:440px;overflow-y:auto;
+  background:var(--surf-100);border:1px solid var(--bdr-20);
+  border-radius:10px;padding:6px 0;
+  box-shadow:var(--shadow-card);
+}
+.filter-pop-title{
+  font-size:10px;font-weight:600;letter-spacing:.08em;
+  color:var(--text-40);text-transform:uppercase;
+  padding:8px 14px 6px;
+}
+.filter-pop-item{
+  display:flex;align-items:center;gap:10px;
+  padding:7px 14px;cursor:pointer;
+  font-size:13px;color:var(--text);
+  transition:background .12s;user-select:none;
+}
+.filter-pop-item:hover{background:var(--surf-300);}
+.filter-pop-item .chk{
+  width:15px;height:15px;border:1.5px solid var(--bdr-20);border-radius:4px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  background:var(--bg-light);transition:all .12s;
+}
+.filter-pop-item.sel .chk{background:var(--text);border-color:var(--text);}
+.filter-pop-item.sel .chk::after{
+  content:'';width:7px;height:4px;
+  border-left:2px solid var(--bg);border-bottom:2px solid var(--bg);
+  transform:rotate(-45deg);margin-top:-2px;
+}
+.filter-pop-divider{
+  height:1px;background:var(--bdr-10);margin:6px 0;
+}
+.tb-clear{
+  display:inline-flex;align-items:center;gap:4px;
+  font-family:var(--font-ui);font-size:12px;font-weight:500;
+  height:32px;padding:0 10px;border-radius:6px;
+  border:1px solid transparent;background:transparent;
+  color:var(--text-55);cursor:pointer;transition:all .15s;
+}
+.tb-clear:hover{color:var(--text);background:var(--surf-300);}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--text);color:#fff;
+  padding:10px 18px;border-radius:8px;
+  font-size:13px;font-weight:500;
+  box-shadow:var(--shadow-card);
+  opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;
+  z-index:800;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+</style>
+</head>
+<body>
+
+<!-- BREADCRUMB BAR (always visible; empty on scenarios root) -->
+<div class="breadcrumb-bar">
+  <div class="wrap" style="display:flex;align-items:center;">
+    <nav class="bc" id="breadcrumb"></nav>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div id="header-title"></div>
+    <div class="header-actions" id="header-actions"></div>
+  </div>
+
+  <!-- SETTINGS CARD (only on target pages) -->
+  <div id="settings-slot"></div>
+
+  <!-- SECTION TITLE -->
+  <div id="section-title" class="section-title hidden"></div>
+
+  <!-- TOOLBAR (search + filters) -->
+  <div id="toolbar-slot"></div>
+
+  <!-- MAIN LIST AREA -->
+  <div id="main-list"></div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+//  DATA
+// ─────────────────────────────────────────────
+const SCENARIOS = {
+  fy2026: {
+    name: 'FY2026 Reduction Plan',
+    date: 'Apr 8, 2026',
+    trackCount: 3,
+    targets: [
+      {id:1,  name:"Reduce Scope 1 Emissions −30%",   track:"Scope 1", objective:"−30%",  owner:"Marie Laurent",  region:"Global",    actions:0, subTargets:8, depth:0, pid:null, kids:[2,10,11,12],  branches:["Global"],                         baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:2,  name:"Fleet Decarbonization",            track:"Scope 1", objective:"−35%",  owner:"Pierre Dubois",  region:"Europe",    actions:0, subTargets:4, depth:1, pid:1,    kids:[3,8,9],      branches:["West Europe","Transport"],         baselineYear:2021, targetYear:2029, functionArea:"Transport"},
+      {id:3,  name:"Fleet Electrification — France",   track:"Scope 1", objective:"−40%",  owner:"Pierre Dubois",  region:"France",    actions:0, subTargets:2, depth:2, pid:2,    kids:[4,7],        branches:["France","Transport"],              baselineYear:2021, targetYear:2029, functionArea:"Transport"},
+      {id:4,  name:"Paris Region Fleet",               track:"Scope 1", objective:"−45%",  owner:"Pierre Dubois",  region:"France",    actions:0, subTargets:2, depth:3, pid:3,    kids:[5,6],        branches:["Paris","Transport"],               baselineYear:2021, targetYear:2029, functionArea:"Transport"},
+      {id:5,  name:"Paris — Light Vehicles",           track:"Scope 1", objective:"−50%",  owner:"Pierre Dubois",  region:"France",    actions:3, subTargets:0, depth:4, pid:4,    kids:[],           branches:["Paris","Transport"],               baselineYear:2022, targetYear:2029, functionArea:"Transport"},
+      {id:6,  name:"Paris — Heavy Trucks",             track:"Scope 1", objective:"−40%",  owner:"Pierre Dubois",  region:"France",    actions:2, subTargets:0, depth:4, pid:4,    kids:[],           branches:["Paris","Transport"],               baselineYear:2022, targetYear:2029, functionArea:"Transport"},
+      {id:7,  name:"Lyon Region Fleet",                track:"Scope 1", objective:"−35%",  owner:"Pierre Dubois",  region:"France",    actions:0, subTargets:2, depth:3, pid:3,    kids:[31,32],      branches:["Lyon","Transport"],                baselineYear:2021, targetYear:2029, functionArea:"Transport"},
+      {id:31, name:"Lyon — Heavy Trucks",              track:"Scope 1", objective:"−30%",  owner:"Pierre Dubois",  region:"France",    actions:2, subTargets:0, depth:4, pid:7,    kids:[],           branches:["Lyon","Transport"],                baselineYear:2022, targetYear:2029, functionArea:"Transport"},
+      {id:32, name:"Lyon — Utility Vehicles",          track:"Scope 1", objective:"−35%",  owner:"Pierre Dubois",  region:"France",    actions:2, subTargets:0, depth:4, pid:7,    kids:[],           branches:["Lyon","Transport"],                baselineYear:2022, targetYear:2029, functionArea:"Transport"},
+      {id:8,  name:"Fleet Electrification — Germany",  track:"Scope 1", objective:"−25%",  owner:"Hans Weber",     region:"Germany",   actions:1, subTargets:0, depth:2, pid:2,    kids:[],           branches:["Germany","Transport"],             baselineYear:2021, targetYear:2029, functionArea:"Transport"},
+      {id:9,  name:"Fleet Fuel Switching — US",        track:"Scope 1", objective:"−20%",  owner:"James Miller",   region:"Americas",  actions:0, subTargets:0, depth:2, pid:2,    kids:[],           branches:["Americas","Transport"],            baselineYear:2021, targetYear:2030, functionArea:"Transport"},
+      {id:10, name:"Buildings Energy — France",        track:"Scope 1", objective:"−40%",  owner:"Pierre Dubois",  region:"France",    actions:2, subTargets:0, depth:1, pid:1,    kids:[],           branches:["France","Operations"],             baselineYear:2021, targetYear:2029, functionArea:"Operations"},
+      {id:11, name:"Buildings Energy — Germany",       track:"Scope 1", objective:"−35%",  owner:"Hans Weber",     region:"Germany",   actions:0, subTargets:0, depth:1, pid:1,    kids:[],           branches:["Germany","Operations"],            baselineYear:2021, targetYear:2029, functionArea:"Operations"},
+      {id:12, name:"Manufacturing Process",            track:"Scope 1", objective:"−15%",  owner:"Yuki Tanaka",    region:"APAC",      actions:1, subTargets:0, depth:1, pid:1,    kids:[],           branches:["APAC","Factory"],                  baselineYear:2021, targetYear:2029, functionArea:"Factory"},
+      {id:13, name:"Reduce Scope 2 Emissions −50%",    track:"Scope 2", objective:"−50%",  owner:"Marie Laurent",  region:"Global",    actions:0, subTargets:3, depth:0, pid:null, kids:[14,15,16],   branches:["Global"],                          baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:14, name:"Renewable Energy Procurement",     track:"Scope 2", objective:"−60%",  owner:"Sophie Martin",  region:"Europe",    actions:4, subTargets:0, depth:1, pid:13,   kids:[],           branches:["Europe","Operations"],             baselineYear:2021, targetYear:2029, functionArea:"Operations"},
+      {id:15, name:"On-site Solar — Tokyo Plant",      track:"Scope 2", objective:"−20%",  owner:"Yuki Tanaka",    region:"APAC",      actions:2, subTargets:0, depth:1, pid:13,   kids:[],           branches:["APAC","Factory"],                  baselineYear:2021, targetYear:2029, functionArea:"Factory"},
+      {id:16, name:"Grid Decarbonization — US",        track:"Scope 2", objective:"−30%",  owner:"James Miller",   region:"Americas",  actions:1, subTargets:0, depth:1, pid:13,   kids:[],           branches:["Americas","Operations"],           baselineYear:2021, targetYear:2029, functionArea:"Operations"},
+      {id:17, name:"Reduce Scope 3 Emissions −40%",    track:"Scope 3", objective:"−40%",  owner:"Marie Laurent",  region:"Global",    actions:0, subTargets:9, depth:0, pid:null, kids:[18,24,25,26,27], branches:["Global"],                      baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:18, name:"Supplier Engagement Program",      track:"Scope 3", objective:"−25%",  owner:"Lisa Chen",      region:"Global",    actions:0, subTargets:4, depth:1, pid:17,   kids:[19,22,23],   branches:["Global","Supply Chain"],           baselineYear:2021, targetYear:2029, functionArea:"Supply Chain"},
+      {id:19, name:"Tier 1 Suppliers — Packaging",     track:"Scope 3", objective:"−30%",  owner:"Lisa Chen",      region:"Europe",    actions:0, subTargets:2, depth:2, pid:18,   kids:[20,21],      branches:["Europe","Packaging"],              baselineYear:2021, targetYear:2029, functionArea:"Packaging"},
+      {id:20, name:"Packaging — Plastics",             track:"Scope 3", objective:"−35%",  owner:"Lisa Chen",      region:"Europe",    actions:2, subTargets:0, depth:3, pid:19,   kids:[],           branches:["Europe","Packaging"],              baselineYear:2022, targetYear:2029, functionArea:"Packaging"},
+      {id:21, name:"Packaging — Cardboard",            track:"Scope 3", objective:"−25%",  owner:"Lisa Chen",      region:"Europe",    actions:1, subTargets:0, depth:3, pid:19,   kids:[],           branches:["Europe","Packaging"],              baselineYear:2022, targetYear:2029, functionArea:"Packaging"},
+      {id:22, name:"Tier 1 Suppliers — Raw Materials", track:"Scope 3", objective:"−20%",  owner:"Lisa Chen",      region:"Global",    actions:0, subTargets:0, depth:2, pid:18,   kids:[],           branches:["Global","Supply Chain"],           baselineYear:2021, targetYear:2029, functionArea:"Supply Chain"},
+      {id:23, name:"Tier 2 Suppliers — Logistics",     track:"Scope 3", objective:"−15%",  owner:"Lisa Chen",      region:"Global",    actions:1, subTargets:0, depth:2, pid:18,   kids:[],           branches:["Global","Supply Chain"],           baselineYear:2021, targetYear:2029, functionArea:"Supply Chain"},
+      {id:24, name:"Business Travel Reduction",        track:"Scope 3", objective:"−50%",  owner:"Sophie Martin",  region:"Global",    actions:3, subTargets:0, depth:1, pid:17,   kids:[],           branches:["Global","Corporate"],              baselineYear:2021, targetYear:2029, functionArea:"Corporate"},
+      {id:25, name:"Employee Commuting",               track:"Scope 3", objective:"−30%",  owner:"Pierre Dubois",  region:"France",    actions:1, subTargets:0, depth:1, pid:17,   kids:[],           branches:["France","Corporate"],              baselineYear:2021, targetYear:2029, functionArea:"Corporate"},
+      {id:26, name:"Logistics Optimization",           track:"Scope 3", objective:"−35%",  owner:"Hans Weber",     region:"Europe",    actions:0, subTargets:0, depth:1, pid:17,   kids:[],           branches:["Europe","Supply Chain"],           baselineYear:2021, targetYear:2029, functionArea:"Supply Chain"},
+      {id:27, name:"Digital Services Footprint",       track:"Scope 3", objective:"−20%",  owner:"James Miller",   region:"Americas",  actions:0, subTargets:0, depth:1, pid:17,   kids:[],           branches:["Americas","IT"],                   baselineYear:2021, targetYear:2029, functionArea:"IT"},
+      {id:28, name:"Reduce Water Consumption −20%",    track:"Water",   objective:"−20%",  owner:"Yuki Tanaka",    region:"APAC",      actions:0, subTargets:2, depth:0, pid:null, kids:[29,30],      branches:["APAC"],                            baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+      {id:29, name:"Cooling System Retrofit — Tokyo",  track:"Water",   objective:"−30%",  owner:"Yuki Tanaka",    region:"APAC",      actions:2, subTargets:0, depth:1, pid:28,   kids:[],           branches:["APAC","Factory"],                  baselineYear:2021, targetYear:2029, functionArea:"Factory"},
+      {id:30, name:"Water Recycling — Lyon Plant",     track:"Water",   objective:"−15%",  owner:"Pierre Dubois",  region:"France",    actions:1, subTargets:0, depth:1, pid:28,   kids:[],           branches:["France","Factory"],                baselineYear:2021, targetYear:2029, functionArea:"Factory"},
+    ]
+  },
+  fy2027: {
+    name: 'FY2027 Ambitious Plan',
+    date: 'Mar 22, 2026',
+    trackCount: 5,
+    targets: [
+      {id:101, name:"Net Zero Scope 1",           track:"Scope 1", objective:"−100%", owner:"Marie Laurent",  region:"Global",    actions:2, subTargets:0, depth:0, pid:null, kids:[], branches:["Global"],                       baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:102, name:"Net Zero Scope 2",           track:"Scope 2", objective:"−100%", owner:"Marie Laurent",  region:"Global",    actions:3, subTargets:0, depth:0, pid:null, kids:[], branches:["Global"],                       baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:103, name:"Scope 3 Halving",            track:"Scope 3", objective:"−50%",  owner:"Lisa Chen",      region:"Global",    actions:1, subTargets:0, depth:0, pid:null, kids:[], branches:["Global","Supply Chain"],        baselineYear:2021, targetYear:2030, functionArea:"Supply Chain"},
+      {id:104, name:"Full Renewable Energy",      track:"Scope 2", objective:"−100%", owner:"Sophie Martin",  region:"Europe",    actions:4, subTargets:0, depth:0, pid:null, kids:[], branches:["Europe","Operations"],          baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+      {id:105, name:"Zero Business Travel",       track:"Scope 3", objective:"−100%", owner:"Sophie Martin",  region:"Global",    actions:0, subTargets:0, depth:0, pid:null, kids:[], branches:["Global","Corporate"],           baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:106, name:"Water Neutral Operations",   track:"Water",   objective:"−100%", owner:"Yuki Tanaka",    region:"APAC",      actions:0, subTargets:0, depth:0, pid:null, kids:[], branches:["APAC","Operations"],            baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+      {id:107, name:"Circular Packaging",         track:"Waste",   objective:"−100%", owner:"Hans Weber",     region:"Europe",    actions:2, subTargets:0, depth:0, pid:null, kids:[], branches:["Europe","Packaging"],           baselineYear:2021, targetYear:2030, functionArea:"Packaging"},
+      {id:108, name:"Carbon Removal Investment",  track:"Scope 1", objective:"−20%",  owner:"James Miller",   region:"Americas",  actions:0, subTargets:0, depth:0, pid:null, kids:[], branches:["Americas","Corporate"],         baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+    ]
+  },
+  conservative: {
+    name: 'Conservative Baseline',
+    date: 'Jan 15, 2026',
+    trackCount: 5,
+    targets: [
+      {id:201, name:"Scope 1 Compliance", track:"Scope 1", objective:"−10%", owner:"Marie Laurent",  region:"Global",   actions:5, subTargets:0, depth:0, pid:null, kids:[], branches:["Global"],                    baselineYear:2021, targetYear:2030, functionArea:"Corporate"},
+      {id:202, name:"Scope 2 Efficiency", track:"Scope 2", objective:"−15%", owner:"Sophie Martin",  region:"Europe",   actions:3, subTargets:0, depth:0, pid:null, kids:[], branches:["Europe","Operations"],       baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+      {id:203, name:"Supplier Basics",    track:"Scope 3", objective:"−5%",  owner:"Lisa Chen",      region:"Global",   actions:2, subTargets:0, depth:0, pid:null, kids:[], branches:["Global","Supply Chain"],     baselineYear:2021, targetYear:2030, functionArea:"Supply Chain"},
+      {id:204, name:"Water Monitoring",   track:"Water",   objective:"−5%",  owner:"Yuki Tanaka",    region:"APAC",     actions:1, subTargets:0, depth:0, pid:null, kids:[], branches:["APAC","Operations"],         baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+      {id:205, name:"Waste Reporting",    track:"Waste",   objective:"−10%", owner:"Hans Weber",     region:"Germany",  actions:1, subTargets:0, depth:0, pid:null, kids:[], branches:["Germany","Operations"],      baselineYear:2021, targetYear:2030, functionArea:"Operations"},
+    ]
+  }
+};
+const SCENARIO_ORDER = ['fy2026','fy2027','conservative'];
+
+// ─────────────────────────────────────────────
+//  STATE
+//  view = 'scenarios' | 'scenario' | 'target'
+// ─────────────────────────────────────────────
+let view = 'scenarios';
+let activeScenarioId = null;
+let DATA = [];
+let TM = {};
+let currentTargetId = null;
+
+// Per-table filters — reset on navigation.
+// `regions` and `branches` are arrays (multi-select).
+let filters = {search:'', regions:[], branches:[]};
+function resetFilters(){filters = {search:'', regions:[], branches:[]};}
+let _filterPopOpen = false;
+
+function loadScenario(id){
+  activeScenarioId = id;
+  DATA = SCENARIOS[id].targets;
+  TM = {};
+  DATA.forEach(t=>TM[t.id]=t);
+}
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function ancestors(id){
+  const chain=[];let t=TM[id];
+  while(t&&t.pid!=null){chain.unshift(t.pid);t=TM[t.pid];}
+  return chain;
+}
+
+function sumActions(id){
+  const t=TM[id];if(!t)return 0;
+  if(!t.kids||t.kids.length===0)return t.actions;
+  return t.kids.reduce((s,k)=>s+sumActions(k),0);
+}
+
+// ─────────────────────────────────────────────
+//  RENDER
+// ─────────────────────────────────────────────
+function render(){
+  renderBreadcrumb();
+  renderHeader();
+  renderSettings();
+  renderSection();
+  renderToolbar();
+  renderMainList();
+}
+
+function renderBreadcrumb(){
+  const bc=document.getElementById('breadcrumb');
+  if(view==='scenarios'){
+    // Root: no breadcrumb (the h1 'Scenarios' is already the page label)
+    bc.innerHTML='';
+    return;
+  }
+  // Every other view starts with a clickable "Scenarios" entry
+  let html=`<span class="bc-link" onclick="goToScenarios()">Scenarios</span>`;
+  const sc=SCENARIOS[activeScenarioId];
+  if(view==='scenario'){
+    html+=`<span class="bc-sep">/</span><span class="bc-current">${esc(sc.name)}</span>`;
+  } else if(view==='target'){
+    html+=`<span class="bc-sep">/</span><span class="bc-link" onclick="goToScenario('${activeScenarioId}')">${esc(sc.name)}</span>`;
+    ancestors(currentTargetId).forEach(aid=>{
+      const at=TM[aid];
+      html+=`<span class="bc-sep">/</span><span class="bc-link" onclick="goToTarget(${aid})">${esc(at.name)}</span>`;
+    });
+    const t=TM[currentTargetId];
+    html+=`<span class="bc-sep">/</span><span class="bc-current">${esc(t.name)}</span>`;
+  }
+  bc.innerHTML=html;
+}
+
+function renderHeader(){
+  const titleEl=document.getElementById('header-title');
+  const actionsEl=document.getElementById('header-actions');
+
+  if(view==='scenarios'){
+    const n=SCENARIO_ORDER.length;
+    titleEl.innerHTML=`
+      <h1>Scenarios</h1>
+      <p class="subtitle">${n} scenario${n!==1?'s':''}</p>
+    `;
+    actionsEl.innerHTML=`
+      <button class="btn btn-primary" onclick="onAddScenario()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+        New scenario
+      </button>
+    `;
+    return;
+  }
+
+  const sc=SCENARIOS[activeScenarioId];
+
+  if(view==='scenario'){
+    const nT=DATA.length,nTr=sc.trackCount||0;
+    titleEl.innerHTML=`
+      <h1>${esc(sc.name)}</h1>
+      <p class="subtitle">${nT} target${nT!==1?'s':''} · ${nTr} track${nTr!==1?'s':''} · Last edited ${sc.date}</p>
+    `;
+    actionsEl.innerHTML=`
+      <button class="btn btn-primary" onclick="onAddTarget()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+        Add target
+      </button>
+    `;
+    return;
+  }
+
+  // target view
+  const t=TM[currentTargetId];
+  titleEl.innerHTML=`
+    <h1>${esc(t.name)}</h1>
+    <p class="subtitle">Reduce emissions in line with SBTi-approved science-based pathways.</p>
+  `;
+  actionsEl.innerHTML=`
+    <button class="btn btn-primary" onclick="onAddSubTarget()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+      Add sub-target
+    </button>
+    <button class="btn btn-icon" title="More">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="3" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="13" cy="8" r="1.2" fill="currentColor"/></svg>
+    </button>
+  `;
+}
+
+function renderSettings(){
+  const slot=document.getElementById('settings-slot');
+  if(view!=='target'){slot.innerHTML='';return;}
+  const t=TM[currentTargetId];
+  const brArr=t.branches||[];
+  const brHtml=brArr.length
+    ?brArr.map(b=>`<span class="bpill">${esc(b)}</span>`).join('')
+    :'<span class="sc-val" style="color:var(--text-40);">—</span>';
+  slot.innerHTML=`
+    <div class="settings-card">
+      <div class="sc-col">
+        <span class="sc-label">Track</span>
+        <span class="sc-val">${esc(t.track)} (tCO2e)</span>
+      </div>
+      <div class="sc-col">
+        <span class="sc-label">Forecast</span>
+        <span class="sc-val">🚀 Emissions forecast (tCO2e)</span>
+      </div>
+      <div class="sc-col sc-col-branches">
+        <span class="sc-label">Branches</span>
+        <span class="sc-val sc-val-branches">${brHtml}</span>
+      </div>
+      <div class="sc-col">
+        <span class="sc-label">Objective</span>
+        <span class="sc-val">Percentage ${esc(t.objective)}</span>
+      </div>
+      <div class="sc-col">
+        <span class="sc-label">Documentation</span>
+        <span class="sc-val">0 files</span>
+      </div>
+      <button class="sc-edit-btn" onclick="onEditTarget()" title="Edit settings">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 2.5l2 2L5 13l-3 1 1-3 8.5-8.5z"/></svg>
+        Edit
+      </button>
+    </div>
+  `;
+}
+
+function renderSection(){
+  // Section titles are rendered inline inside renderMainList for the target view,
+  // so this top-level section title stays hidden on every view now.
+  const st=document.getElementById('section-title');
+  st.classList.add('hidden');
+  st.innerHTML='';
+}
+
+function getCurrentList(){
+  // Returns the list of targets for the current view (scenario root or sub-targets)
+  if(view==='scenario')return DATA.filter(t=>t.pid===null||t.pid===undefined);
+  if(view==='target'){
+    const t=TM[currentTargetId];
+    if(t&&t.kids&&t.kids.length>0)return t.kids.map(k=>TM[k]).filter(Boolean);
+  }
+  return [];
+}
+
+function applyTargetFilters(list){
+  const s=filters.search.trim().toLowerCase();
+  return list.filter(t=>{
+    if(s && !(t.name||'').toLowerCase().includes(s))return false;
+    if(filters.regions.length && !filters.regions.includes(t.region))return false;
+    if(filters.branches.length){
+      const tb=t.branches||[];
+      if(!filters.branches.some(b=>tb.includes(b)))return false;
+    }
+    return true;
+  });
+}
+
+function renderToolbar(){
+  const slot=document.getElementById('toolbar-slot');
+
+  // On target view with no sub-targets, the toolbar would only filter an empty
+  // list — hide it. Leaf targets still get the Actions section rendered below.
+  if(view==='target'){
+    const t=TM[currentTargetId];
+    if(!t||!t.kids||t.kids.length===0){slot.innerHTML='';return;}
+  }
+
+  if(view==='scenarios'){
+    const hasActive=!!filters.search;
+    slot.innerHTML=`
+      <div class="toolbar">
+        <div class="tb-search">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="5"/><path d="M13 13l-2.8-2.8"/></svg>
+          <input id="tb-search-input" type="text" placeholder="Search scenarios…" value="${esc(filters.search)}" oninput="onSearchInput(this.value)">
+        </div>
+        ${hasActive?'<button class="tb-clear" onclick="onClearFilters()">Clear</button>':''}
+      </div>
+    `;
+    restoreSearchFocus();
+    return;
+  }
+
+  // Targets / sub-targets view — Region + Branches filter popover
+  const source=getCurrentList();
+  const regions=[...new Set(source.map(t=>t.region).filter(Boolean))].sort();
+  const branchSet=new Set();
+  source.forEach(t=>(t.branches||[]).forEach(b=>branchSet.add(b)));
+  const branches=[...branchSet].sort();
+
+  const filterCount=filters.regions.length+filters.branches.length;
+  const filterActive=filterCount>0;
+  const hasActive=!!filters.search||filterActive;
+  const searchPlaceholder=view==='target'?'Search sub-targets…':'Search targets…';
+
+  const regionItems=regions.map(r=>`
+    <div class="filter-pop-item ${filters.regions.includes(r)?'sel':''}" onclick="toggleRegion(this.dataset.val)" data-val="${esc(r)}">
+      <div class="chk"></div><span>${esc(r)}</span>
+    </div>
+  `).join('')||'<div class="filter-pop-item" style="color:var(--text-40);cursor:default;"><span>No regions</span></div>';
+
+  const branchItems=branches.map(b=>`
+    <div class="filter-pop-item ${filters.branches.includes(b)?'sel':''}" onclick="toggleBranch(this.dataset.val)" data-val="${esc(b)}">
+      <div class="chk"></div><span>${esc(b)}</span>
+    </div>
+  `).join('')||'<div class="filter-pop-item" style="color:var(--text-40);cursor:default;"><span>No branches</span></div>';
+
+  slot.innerHTML=`
+    <div class="toolbar">
+      <div class="tb-search">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="5"/><path d="M13 13l-2.8-2.8"/></svg>
+        <input id="tb-search-input" type="text" placeholder="${searchPlaceholder}" value="${esc(filters.search)}" oninput="onSearchInput(this.value)">
+      </div>
+      <div class="tb-filter-wrap">
+        <button class="tb-filterbtn ${filterActive?'active':''}" onclick="toggleFilterPop(event)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h12M4.5 8h7M7 12h2"/></svg>
+          Filter${filterActive?`<span class="tb-badge">${filterCount}</span>`:''}
+        </button>
+        <div class="filter-pop hidden" id="filter-pop" onclick="event.stopPropagation()">
+          <div class="filter-pop-title">Region</div>
+          ${regionItems}
+          <div class="filter-pop-divider"></div>
+          <div class="filter-pop-title">Branches</div>
+          ${branchItems}
+        </div>
+      </div>
+      ${hasActive?'<button class="tb-clear" onclick="onClearFilters()">Clear</button>':''}
+    </div>
+  `;
+  restoreSearchFocus();
+  // Restore popover open state across re-renders
+  if(_filterPopOpen){
+    const pop=document.getElementById('filter-pop');
+    if(pop)pop.classList.remove('hidden');
+  }
+}
+
+function restoreSearchFocus(){
+  // If the user was typing in the search input, put focus back after re-render
+  if(_searchHasFocus){
+    const el=document.getElementById('tb-search-input');
+    if(el){el.focus();const v=el.value;el.setSelectionRange(v.length,v.length);}
+  }
+}
+let _searchHasFocus=false;
+function onSearchInput(v){
+  filters.search=v;
+  _searchHasFocus=true;
+  renderMainList();
+}
+function toggleFilterPop(e){
+  if(e)e.stopPropagation();
+  _filterPopOpen=!_filterPopOpen;
+  _searchHasFocus=false;
+  const pop=document.getElementById('filter-pop');
+  if(pop)pop.classList.toggle('hidden',!_filterPopOpen);
+}
+function toggleRegion(val){
+  const i=filters.regions.indexOf(val);
+  if(i>=0)filters.regions.splice(i,1);else filters.regions.push(val);
+  _searchHasFocus=false;
+  renderToolbar();
+  renderMainList();
+}
+function toggleBranch(val){
+  const i=filters.branches.indexOf(val);
+  if(i>=0)filters.branches.splice(i,1);else filters.branches.push(val);
+  _searchHasFocus=false;
+  renderToolbar();
+  renderMainList();
+}
+function onClearFilters(){
+  resetFilters();
+  _searchHasFocus=false;
+  _filterPopOpen=false;
+  renderToolbar();
+  renderMainList();
+}
+// Outside-click closes the filter popover
+document.addEventListener('click',function(e){
+  if(!_filterPopOpen)return;
+  if(e.target.closest('.filter-pop'))return;
+  if(e.target.closest('.tb-filterbtn'))return;
+  _filterPopOpen=false;
+  const pop=document.getElementById('filter-pop');
+  if(pop)pop.classList.add('hidden');
+});
+
+function renderMainList(){
+  const mount=document.getElementById('main-list');
+  if(view==='scenarios'){
+    mount.innerHTML=renderScenariosList();
+    return;
+  }
+  if(view==='scenario'){
+    const rootTargets=DATA.filter(t=>t.pid===null||t.pid===undefined);
+    const filtered=applyTargetFilters(rootTargets);
+    mount.innerHTML=renderTargetRows(filtered,rootTargets.length);
+    return;
+  }
+  // target view — always render BOTH Sub-targets and Actions sections
+  const t=TM[currentTargetId];
+  const hasKids=t.kids&&t.kids.length>0;
+
+  // Sub-targets section
+  let subsSection;
+  if(hasKids){
+    const kids=t.kids.map(k=>TM[k]).filter(Boolean);
+    const filtered=applyTargetFilters(kids);
+    const subCount=kids.length;
+    const subAct=sumActions(t.id);
+    const subsBody=renderTargetRows(filtered,kids.length);
+    subsSection=`
+      <div class="section-block">
+        <div class="section-head">
+          <span>Sub-targets</span>
+          <span class="count">${subCount} direct · ${subAct} action${subAct!==1?'s':''} total</span>
+          <button class="add-link" onclick="onAddSubTarget()">+ Add sub-target</button>
+        </div>
+        ${subsBody}
+      </div>
+    `;
+  } else {
+    subsSection=`
+      <div class="section-block">
+        <div class="section-head">
+          <span>Sub-targets</span>
+          <span class="count">0</span>
+          <button class="add-link" onclick="onAddSubTarget()">+ Add sub-target</button>
+        </div>
+        <div class="empty-state">
+          <div class="emoji">🎯</div>
+          <div class="msg">No sub-targets yet for this target.</div>
+          <button class="btn btn-primary" onclick="onAddSubTarget()">+ Add sub-target</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // Actions section
+  let actsSection;
+  if(t.actions>0){
+    const items=Array.from({length:t.actions},(_,i)=>`<li>Action ${i+1} — ${esc(t.name)}</li>`).join('');
+    actsSection=`
+      <div class="section-block">
+        <div class="section-head">
+          <span>Actions</span>
+          <span class="count">${t.actions} action${t.actions!==1?'s':''}</span>
+          <button class="add-link" onclick="onAddAction()">+ Add action</button>
+        </div>
+        <ul class="action-list">${items}</ul>
+      </div>
+    `;
+  } else {
+    actsSection=`
+      <div class="section-block">
+        <div class="section-head">
+          <span>Actions</span>
+          <span class="count">0</span>
+          <button class="add-link" onclick="onAddAction()">+ Add action</button>
+        </div>
+        <div class="empty-state">
+          <div class="emoji">📋</div>
+          <div class="msg">No actions yet for this target.</div>
+          <button class="btn btn-primary" onclick="onAddAction()">+ Add action</button>
+        </div>
+      </div>
+    `;
+  }
+
+  mount.innerHTML=subsSection+actsSection;
+}
+
+function renderScenariosList(){
+  const s=filters.search.trim().toLowerCase();
+  const filteredIds=s
+    ? SCENARIO_ORDER.filter(sid=>SCENARIOS[sid].name.toLowerCase().includes(s))
+    : SCENARIO_ORDER;
+
+  if(filteredIds.length===0){
+    return `<div class="empty-state"><div class="emoji">🔍</div><div class="msg">No scenarios match "${esc(filters.search)}".</div><button class="btn" onclick="onClearFilters()">Clear search</button></div>`;
+  }
+
+  const header=`
+    <div class="slist-header">
+      <span>Name</span>
+      <span class="th-r"># Targets</span>
+      <span class="th-r"># Tracks</span>
+      <span>Last edited</span>
+      <span></span>
+    </div>
+  `;
+  const rows=filteredIds.map(sid=>{
+    const sc=SCENARIOS[sid];
+    return `
+      <div class="srow" onclick="goToScenario('${sid}')">
+        <span class="s-name">${esc(sc.name)}</span>
+        <span class="trow-num">${sc.targets.length}</span>
+        <span class="trow-num">${sc.trackCount||0}</span>
+        <span class="trow-cell-sec">${esc(sc.date)}</span>
+        <span class="chev-r">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l4 4-4 4"/></svg>
+        </span>
+      </div>
+    `;
+  }).join('');
+  return `<div class="tlist">${header}${rows}</div>`;
+}
+
+function renderTargetRows(list,sourceCount){
+  if(list.length===0){
+    // Distinguish empty-from-filters vs empty source
+    if(sourceCount&&sourceCount>0){
+      return `<div class="empty-state"><div class="emoji">🔍</div><div class="msg">No targets match your search or filters.</div><button class="btn" onclick="onClearFilters()">Clear filters</button></div>`;
+    }
+    return `<div class="empty-state"><div class="emoji">🎯</div><div class="msg">No targets yet.</div><button class="btn btn-primary" onclick="onAddChild()">+ Add target</button></div>`;
+  }
+  const header=`
+    <div class="tlist-header">
+      <span>Name</span>
+      <span class="th-r"># Sub-targets</span>
+      <span class="th-r"># Actions</span>
+      <span>Branches</span>
+      <span>Baseline year</span>
+      <span>Target year</span>
+      <span>Region</span>
+      <span>Function</span>
+      <span></span>
+    </div>
+  `;
+  const rows=list.map(t=>{
+    const hasKids=t.kids&&t.kids.length>0;
+    const dispAct=hasKids?sumActions(t.id):t.actions;
+    const actCls=hasKids
+      ? (dispAct===0?'num-0':'num-agg')
+      : (t.actions===0?'num-0':'');
+    const dispSub=hasKids?t.kids.length:0;
+    const subCls=hasKids?'':'num-agg';
+    const subDisp=hasKids?dispSub:'—';
+    const subMeta=esc(t.track);
+    const brHtml=(t.branches||[]).map(b=>`<span class="bpill">${esc(b)}</span>`).join('')
+      || '<span class="trow-cell-sec">—</span>';
+    return `
+      <div class="trow" onclick="goToTarget(${t.id})">
+        <div class="trow-name">
+          <span class="n-name">${esc(t.name)}</span>
+          <span class="n-sub">${subMeta}</span>
+        </div>
+        <span class="trow-num ${subCls}">${subDisp}</span>
+        <span class="trow-num ${actCls}">${dispAct}</span>
+        <div class="trow-branches">${brHtml}</div>
+        <span class="trow-cell-sec">${t.baselineYear??'—'}</span>
+        <span class="trow-cell-sec">${t.targetYear??'—'}</span>
+        <span class="trow-cell-sec">${esc(t.region)}</span>
+        <span class="trow-cell-sec">${esc(t.functionArea||'—')}</span>
+        <span class="chev-r">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l4 4-4 4"/></svg>
+        </span>
+      </div>
+    `;
+  }).join('');
+  return `<div class="tlist">${header}${rows}</div>`;
+}
+
+// ─────────────────────────────────────────────
+//  HASH ROUTING (Maze-friendly URLs)
+//  (no hash) or #/scenarios  → scenarios list page
+//  #/sc/{scenarioId}          → scenario root page
+//  #/sc/{scenarioId}/t/{id}   → target detail page
+// ─────────────────────────────────────────────
+let _suppressHashApply=false;
+function getHashState(){
+  const h=window.location.hash.slice(1);
+  if(!h||h==='/scenarios'){return{view:'scenarios',scenarioId:null,targetId:null};}
+  const m=h.match(/^\/sc\/([^\/]+)(?:\/t\/(\d+))?/);
+  if(!m)return{view:'scenarios',scenarioId:null,targetId:null};
+  const sid=m[1]||null;
+  const tid=m[2]?parseInt(m[2],10):null;
+  return{view:tid!=null?'target':'scenario',scenarioId:sid,targetId:tid};
+}
+function buildHash(v,scenarioId,targetId){
+  if(v==='scenarios')return'#/scenarios';
+  if(v==='scenario')return`#/sc/${scenarioId}`;
+  return`#/sc/${scenarioId}/t/${targetId}`;
+}
+function updateHash(v,scenarioId,targetId){
+  const newHash=buildHash(v,scenarioId,targetId);
+  if(window.location.hash!==newHash){
+    _suppressHashApply=true;
+    try{
+      history.pushState(null,'',newHash);
+    }catch(e){
+      // file:// origins block pushState; fall back to direct hash assignment
+      window.location.hash=newHash;
+    }
+    setTimeout(()=>{_suppressHashApply=false;},0);
+  }
+}
+function applyHashState(){
+  if(_suppressHashApply)return;
+  const s=getHashState();
+  if(s.view==='scenarios'){
+    view='scenarios';activeScenarioId=null;currentTargetId=null;DATA=[];TM={};
+  } else {
+    const sid=SCENARIOS[s.scenarioId]?s.scenarioId:'fy2026';
+    if(sid!==activeScenarioId){loadScenario(sid);}
+    if(s.view==='target'&&s.targetId!=null&&TM[s.targetId]){
+      view='target';currentTargetId=s.targetId;
+    } else {
+      view='scenario';currentTargetId=null;
+    }
+  }
+  resetFilters();
+  _searchHasFocus=false;
+  window.scrollTo(0,0);
+  render();
+}
+window.addEventListener('popstate',applyHashState);
+window.addEventListener('hashchange',applyHashState);
+
+// ─────────────────────────────────────────────
+//  NAVIGATION
+// ─────────────────────────────────────────────
+function goToScenarios(){
+  view='scenarios';activeScenarioId=null;currentTargetId=null;DATA=[];TM={};
+  resetFilters();_searchHasFocus=false;_filterPopOpen=false;
+  window.scrollTo(0,0);
+  updateHash('scenarios',null,null);
+  render();
+}
+function goToScenario(id){
+  if(!SCENARIOS[id])return;
+  if(id!==activeScenarioId){loadScenario(id);}
+  view='scenario';currentTargetId=null;
+  resetFilters();_searchHasFocus=false;_filterPopOpen=false;
+  window.scrollTo(0,0);
+  updateHash('scenario',id,null);
+  render();
+}
+function goToTarget(id){
+  if(!TM[id])return;
+  view='target';currentTargetId=id;
+  resetFilters();_searchHasFocus=false;_filterPopOpen=false;
+  window.scrollTo(0,0);
+  updateHash('target',activeScenarioId,id);
+  render();
+}
+
+// ─────────────────────────────────────────────
+//  STUBS
+// ─────────────────────────────────────────────
+function showToast(msg){
+  const t=document.getElementById('toast');
+  if(!t)return;
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer=setTimeout(()=>t.classList.remove('show'),1800);
+}
+function pushAddMarker(suffix){
+  // Update URL so Maze can detect the "Add" action as task completion
+  let newHash='#/scenarios'+suffix;
+  if(view==='scenario'&&activeScenarioId){newHash=`#/sc/${activeScenarioId}${suffix}`;}
+  if(view==='target'&&activeScenarioId&&currentTargetId!=null){newHash=`#/sc/${activeScenarioId}/t/${currentTargetId}${suffix}`;}
+  _suppressHashApply=true;
+  try{history.pushState(null,'',newHash);}catch(e){window.location.hash=newHash;}
+  setTimeout(()=>{_suppressHashApply=false;},0);
+}
+function onAddScenario(){pushAddMarker('/new');showToast('Add scenario (prototype)');}
+function onAddTarget(){pushAddMarker('/new-target');showToast('Add target (prototype)');}
+function onAddSubTarget(){
+  if(currentTargetId==null)return onAddTarget();
+  pushAddMarker('/new-sub');
+  showToast('Add sub-target (prototype)');
+}
+function onAddAction(){
+  if(currentTargetId==null)return;
+  pushAddMarker('/new-action');
+  showToast('Add action (prototype)');
+}
+function onAddChild(){
+  // Legacy alias — routes to sub-target on parents, action on leaves
+  if(currentTargetId==null)return onAddTarget();
+  const t=TM[currentTargetId];
+  const hasKids=t.kids&&t.kids.length>0;
+  return hasKids?onAddSubTarget():onAddAction();
+}
+function onEditTarget(){showToast('Edit target (prototype)');}
+
+// ─────────────────────────────────────────────
+//  INIT (respects hash on load)
+// ─────────────────────────────────────────────
+(function init(){
+  const s=getHashState();
+  if(s.view==='scenarios'){
+    view='scenarios';
+  } else {
+    const sid=SCENARIOS[s.scenarioId]?s.scenarioId:'fy2026';
+    loadScenario(sid);
+    if(s.view==='target'&&s.targetId!=null&&TM[s.targetId]){
+      view='target';currentTargetId=s.targetId;
+    } else {
+      view='scenario';currentTargetId=null;
+    }
+  }
+  if(!window.location.hash){
+    const initHash=buildHash(view,activeScenarioId,currentTargetId);
+    try{
+      history.replaceState(null,'',initHash);
+    }catch(e){
+      window.location.hash=initHash;
+    }
+  }
+  render();
+})();
+</script>
+</body>
+</html>
